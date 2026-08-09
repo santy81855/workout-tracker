@@ -1,7 +1,6 @@
 "use client";
 
 import { useActiveProgram } from "@/lib/program/use-active-program";
-import { ExerciseMedia } from "@/components/exercise-media";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { workoutRepository } from "@/lib/workout/indexeddb-repository";
 import { getRemoteSession, listAvailableSessions } from "@/lib/workout/history";
@@ -403,7 +402,7 @@ export function ActiveWorkout() {
           </button>
         </div>
 
-        {showingFormHelp ? <div className="exercise-form-help"><strong>Form reminders</strong>{formGuidance.length > 0 ? <ul>{formGuidance.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No form reminders have been added for this exercise.</p>}<ExerciseMedia exerciseName={performedDefinition?.name ?? exercise.name} /></div> : null}
+        {showingFormHelp ? <div className="exercise-form-help"><strong>Form reminders</strong>{formGuidance.length > 0 ? <ul>{formGuidance.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No form reminders have been added for this exercise.</p>}</div> : null}
 
         {showReplacements ? (
           <div className="replacement-panel">
