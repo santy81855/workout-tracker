@@ -25,6 +25,11 @@ export function ExerciseHistoryDetail({ slug }: { slug: string }) {
     .sort((left, right) => new Date(right.session.startedAt).valueOf() - new Date(left.session.startedAt).valueOf());
 
   if (!stat) return <section className="empty-card"><strong>No completed sets</strong><p>This exercise has no saved history yet.</p></section>;
+  const chartPoints = [...occurrences].reverse().map(({ session, exercise }) => {
+    const weighted = exercise.sets.filter((set) => set.status === "completed" && set.loadTenthsLb !== null);
+    return { date: session.startedAt, load: Math.max(...weighted.map((set) => (set.loadTenthsLb ?? 0) / 10), 0), volume: Math.max(...weighted.map((set) => ((set.loadTenthsLb ?? 0) * set.reps) / 10), 0) };
+  }).filter((point) => point.load > 0);
+  const path = (key: "load" | "volume") => { const max = Math.max(...chartPoints.map((point) => point[key]), 1); return chartPoints.map((point, index) => `${chartPoints.length === 1 ? 50 : (index / (chartPoints.length - 1)) * 100},${92 - (point[key] / max) * 82}`).join(" "); };
   return (
     <>
       <section className="record-grid exercise-record-grid" aria-label={`${stat.name} records`}>
@@ -33,6 +38,7 @@ export function ExerciseHistoryDetail({ slug }: { slug: string }) {
         <div><span>Most reps</span><strong>{stat.mostReps}</strong><small>one completed set</small></div>
         <div><span>Completed sets</span><strong>{stat.completedSets}</strong><small>across {stat.sessions} sessions</small></div>
       </section>
+      <section className="program-section exercise-chart-section"><div className="section-heading"><div><p className="eyebrow">Over time</p><h2>Performance chart</h2></div></div>{chartPoints.length ? <><svg aria-label="Highest weight and best set volume by workout" preserveAspectRatio="none" role="img" viewBox="0 0 100 100"><polyline className="chart-load" points={path("load")} /><polyline className="chart-volume" points={path("volume")} /></svg><div className="chart-legend"><span><i className="chart-load-key" />Highest weight</span><span><i className="chart-volume-key" />Best set volume</span></div></> : <p className="muted-copy list-status">Weighted sets will appear here after they are completed.</p>}</section>
       <section className="program-section">
         <div className="section-heading"><div><p className="eyebrow">Set by set</p><h2>History</h2></div></div>
         <div className="exercise-occurrence-list">

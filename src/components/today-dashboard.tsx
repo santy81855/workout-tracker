@@ -118,14 +118,15 @@ export function TodayDashboard() {
     <section className="section-block" aria-labelledby="program-status-title">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Program status</p>
-          <h2 id="program-status-title">{cycleComplete ? "Cycle complete" : weekRule.phase}</h2>
+          <p className="eyebrow">Cycle progress</p>
+          <h2 id="program-status-title">{program.displayTitle ?? program.name}</h2>
         </div>
-        <span className="metric">{resolvedCount} / {totalSessions}</span>
+        <span className="metric">{resolvedCount} of {totalSessions} workouts</span>
       </div>
       <div className="progress-track" aria-label={`${resolvedCount} of ${totalSessions} workouts complete`}>
         <span style={{ width: `${Math.min(100, (resolvedCount / totalSessions) * 100)}%` }} />
       </div>
+      <p className="cycle-phase">Week {displayedWeek} of {program.weekCount} · {cycleComplete ? "Complete" : weekRule.phase}</p>
       <p className="muted-copy">Finishing or intentionally shortening a workout moves you to the next session.</p>
     </section>
     </>
