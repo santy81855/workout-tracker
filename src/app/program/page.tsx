@@ -36,10 +36,10 @@ export default function ProgramPage() {
         </div>
         <div className="week-grid">
           {program.weekRules.map((week) => (
-            <article className={`week-card${week.isDeload ? " week-card-deload" : ""}`} key={week.week}>
+            <article className="week-card" key={week.week}>
               <div>
                 <span className="week-number">W{week.week}</span>
-                <p>{week.phase}</p>
+                <p>{week.phase}{week.isDeload ? " · Deload" : ""}</p>
               </div>
               <strong>{week.targetRir.min === week.targetRir.max ? week.targetRir.min : `${week.targetRir.min}–${week.targetRir.max}`} RIR</strong>
               <small>

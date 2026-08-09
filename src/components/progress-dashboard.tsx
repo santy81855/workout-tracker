@@ -6,6 +6,33 @@ import { useActiveProgram } from "@/lib/program/use-active-program";
 import { listAvailableSessions } from "@/lib/workout/history";
 import type { ActiveWorkoutSession } from "@/lib/workout/types";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+
+function MuscleHeatMap({ values }: { values: Record<string, number> }) {
+  const intensity = (muscle: string) => Math.max(0.12, Math.min(1, (values[muscle] ?? 0) / 15));
+  const area = (muscle: string) => ({ opacity: intensity(muscle) });
+  return (
+    <div className="muscle-heat-map" aria-label="Body map showing weekly muscle-group set exposure">
+      <div><span>Front</span><svg viewBox="0 0 140 300" role="img" aria-label="Front muscle exposure">
+        <circle className="body-outline" cx="70" cy="24" r="17"/><path className="body-outline" d="M48 47 Q70 38 92 47 L106 132 92 176 89 285 70 285 65 181 51 285 32 285 48 176 34 132Z"/>
+        <path className="heat-area" style={area("chest")} d="M51 57 Q70 47 89 57 L86 91 Q70 101 54 91Z"><title>Chest: {values.chest ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("shoulders")} d="M35 54 Q44 45 54 50 L51 74 37 82 28 70Z M86 50 Q97 45 105 54 L112 70 102 82 89 74Z"><title>Shoulders: {values.shoulders ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("biceps")} d="M29 79 43 84 37 126 24 121Z M97 84 111 79 116 121 103 126Z"><title>Biceps: {values.biceps ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("abs")} d="M57 97 83 97 86 150 54 150Z"><title>Abs: {values.abs ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("quads")} d="M48 157 66 158 62 222 39 222Z M74 158 92 157 101 222 78 222Z"><title>Quads: {values.quads ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("calves")} d="M39 227 61 227 57 281 35 281Z M79 227 101 227 105 281 83 281Z"><title>Calves: {values.calves ?? 0} of 15 sets</title></path>
+      </svg></div>
+      <div><span>Back</span><svg viewBox="0 0 140 300" role="img" aria-label="Back muscle exposure">
+        <circle className="body-outline" cx="70" cy="24" r="17"/><path className="body-outline" d="M48 47 Q70 38 92 47 L106 132 92 176 89 285 70 285 65 181 51 285 32 285 48 176 34 132Z"/>
+        <path className="heat-area" style={area("back")} d="M49 56 Q70 46 91 56 L87 117 70 139 53 117Z"><title>Back: {values.back ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("triceps")} d="M29 76 43 82 38 126 24 119Z M97 82 111 76 116 119 102 126Z"><title>Triceps: {values.triceps ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("glutes")} d="M50 140 Q70 129 90 140 L92 170 Q70 181 48 170Z"><title>Glutes: {values.glutes ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("hamstrings")} d="M48 174 66 175 62 225 39 222Z M74 175 92 174 101 222 78 225Z"><title>Hamstrings: {values.hamstrings ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("calves")} d="M39 227 61 227 57 281 35 281Z M79 227 101 227 105 281 83 281Z"><title>Calves: {values.calves ?? 0} of 15 sets</title></path>
+      </svg></div>
+    </div>
+  );
+}
 
 function calculateMuscleSets(sessions: ActiveWorkoutSession[], program: ProgramDocument) {
   const exerciseCatalog = new Map(program.exercises.map((exercise) => [exercise.slug, exercise]));
@@ -81,6 +108,7 @@ export function ProgressDashboard() {
           <button aria-pressed={mode === "completed"} onClick={() => setMode("completed")} type="button">Completed</button>
           <button aria-pressed={mode === "expected"} onClick={() => setMode("expected")} type="button">Expected W{currentWeek}</button>
         </div>
+        <MuscleHeatMap values={displayed} />
         <div className="muscle-grid">
           {program.muscleGroups.map((muscle) => {
             const sets = displayed[muscle];
@@ -101,15 +129,15 @@ export function ProgressDashboard() {
         {exerciseStats.length === 0 ? <p className="muted-copy list-status">Complete a workout to establish exercise records.</p> : (
           <div className="exercise-stat-list">
             {exerciseStats.map((stat) => (
-              <details className="exercise-stat-card" key={stat.slug}>
-                <summary><span>{stat.name}</span><small>{stat.sessions} {stat.sessions === 1 ? "session" : "sessions"}</small></summary>
+              <article className="exercise-stat-card" key={stat.slug}>
+                <Link href={`/progress/exercise/${encodeURIComponent(stat.slug)}`}><span>{stat.name}</span><small>{stat.sessions} {stat.sessions === 1 ? "session" : "sessions"} · View history →</small></Link>
                 <dl>
                   <div><dt>Highest entered load</dt><dd>{stat.highestLoadTenthsLb === null ? "Bodyweight / —" : `${stat.highestLoadTenthsLb / 10} lb`}</dd></div>
                   <div><dt>Most reps in one set</dt><dd>{stat.mostReps}</dd></div>
                   <div><dt>Best set volume</dt><dd>{stat.bestSetVolumeTenths === null ? "—" : (stat.bestSetVolumeTenths / 10).toLocaleString()}</dd></div>
                   <div><dt>Completed sets</dt><dd>{stat.completedSets}</dd></div>
                 </dl>
-              </details>
+              </article>
             ))}
           </div>
         )}

@@ -35,6 +35,7 @@ export function ActiveWorkout() {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [history, setHistory] = useState<ActiveWorkoutSession[]>([]);
+  const [recordCelebration, setRecordCelebration] = useState<string | null>(null);
   const syncTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -76,6 +77,12 @@ export function ActiveWorkout() {
     const interval = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!recordCelebration) return;
+    const timeout = window.setTimeout(() => setRecordCelebration(null), 2_600);
+    return () => window.clearTimeout(timeout);
+  }, [recordCelebration]);
 
   const exercise = session?.exercises[session.activeExerciseIndex] ?? null;
   const activeSetIndex = exercise?.sets.findIndex((set) => set.status !== "completed" && set.status !== "skipped") ?? -1;
@@ -154,6 +161,21 @@ export function ActiveWorkout() {
   }
 
   function confirmRir(onTarget: boolean, actualRir: WorkoutSetDraft["actualRir"] = null) {
+    if (activeSet?.loadTenthsLb !== null && activeSet?.loadTenthsLb !== undefined && exercise) {
+      const priorSets = history
+        .filter((item) => item.id !== session?.id && item.status !== "active")
+        .flatMap((item) => item.exercises)
+        .filter((item) => item.performedExerciseSlug === exercise.performedExerciseSlug)
+        .flatMap((item) => item.sets)
+        .filter((set) => set.status === "completed" && set.loadMode === activeSet.loadMode && set.loadTenthsLb !== null);
+      if (priorSets.length > 0) {
+        const loadRecord = activeSet.loadTenthsLb > Math.max(...priorSets.map((set) => set.loadTenthsLb ?? 0));
+        const volumeRecord = activeSet.loadTenthsLb * activeSet.reps > Math.max(...priorSets.map((set) => (set.loadTenthsLb ?? 0) * set.reps));
+        if (loadRecord && volumeRecord) setRecordCelebration("New weight and set-volume records");
+        else if (loadRecord) setRecordCelebration("New highest weight");
+        else if (volumeRecord) setRecordCelebration("New set-volume record");
+      }
+    }
     updateActiveSet((set) => ({ ...set, status: "completed", rirOnTarget: onTarget, actualRir }));
   }
 
@@ -315,6 +337,12 @@ export function ActiveWorkout() {
             <button onClick={dismissTimer} type="button">Dismiss</button>
           </div>
         </section>
+      ) : null}
+
+      {recordCelebration ? (
+        <div className="record-celebration" role="status" aria-live="polite">
+          <span aria-hidden="true">✦</span><strong>{recordCelebration}</strong><small>{exercise.name}</small>
+        </div>
       ) : null}
 
       {session.syncStatus === "conflict" ? (
@@ -494,6 +522,22 @@ export function ActiveWorkout() {
 
         {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
         {!confirmCancel ? <button className="cancel-workout-trigger" onClick={() => setConfirmCancel(true)} type="button">Cancel Workout</button> : null}
+      </section>
+
+      <section className="workout-itinerary" aria-labelledby="up-next-title">
+        <div className="itinerary-heading"><p className="eyebrow">Workout itinerary</p><h2 id="up-next-title">Up next</h2></div>
+        <ol>
+          {session.exercises.slice(session.activeExerciseIndex + 1).map((upcoming, offset) => {
+            const completed = upcoming.sets.filter((set) => set.status === "completed").length;
+            return (
+              <li key={upcoming.id}>
+                <span className="itinerary-number">{session.activeExerciseIndex + offset + 2}</span>
+                <div><strong>{upcoming.name}</strong><small>{upcoming.sets.length} sets · {upcoming.repMin}–{upcoming.repMax} reps{completed ? ` · ${completed} completed` : ""}</small></div>
+              </li>
+            );
+          })}
+        </ol>
+        {isLastExercise ? <p className="muted-copy">This is your final exercise.</p> : null}
       </section>
     </main>
   );
