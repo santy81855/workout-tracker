@@ -2,6 +2,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { DataExportPanel } from "@/components/data-export-panel";
 import { ProgramImportPanel } from "@/components/program-import-panel";
 import { ActiveProgramSetting } from "@/components/active-program-setting";
+import { AppearancePreferences } from "@/components/appearance-preferences";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
@@ -32,6 +33,7 @@ export default async function SettingsPage() {
         <p className="muted-copy">Signing out clears the workout cache and pending synchronization queue from this browser. Synced database records remain intact.</p>
         <LogoutButton />
       </section>
+      <AppearancePreferences />
       <DataExportPanel />
       <ProgramImportPanel />
     </main>
