@@ -1,0 +1,2 @@
+-- User-owned program and workout data is created through the application.
+-- Curated reference data is versioned in migrations so it is identical in every environment.

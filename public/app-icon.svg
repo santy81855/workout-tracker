@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Workout Tracker">
+  <rect width="512" height="512" rx="112" fill="#090d12"/>
+  <rect x="82" y="220" width="348" height="72" rx="36" fill="#5b9cff"/>
+  <rect x="106" y="168" width="54" height="176" rx="24" fill="#f5f7fa"/>
+  <rect x="352" y="168" width="54" height="176" rx="24" fill="#f5f7fa"/>
+  <rect x="52" y="198" width="46" height="116" rx="20" fill="#5b9cff"/>
+  <rect x="414" y="198" width="46" height="116" rx="20" fill="#5b9cff"/>
+</svg>

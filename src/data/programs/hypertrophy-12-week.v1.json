@@ -1,0 +1,294 @@
+{
+  "schemaVersion": "1.0",
+  "slug": "hypertrophy-12-week-v1",
+  "name": "Twelve-Week Hypertrophy Cycle",
+  "description": "Five ordered training sessions per program week with progressive working-set volume and a Week 12 deload.",
+  "weekCount": 12,
+  "workoutsPerWeek": 5,
+  "defaultIncrementTenthsLb": 25,
+  "muscleGroups": ["chest", "back", "quads", "hamstrings", "glutes", "shoulders", "biceps", "triceps", "calves", "abs"],
+  "exercises": [
+    {
+      "slug": "incline-dumbbell-press",
+      "name": "Incline Dumbbell Press",
+      "equipment": "dumbbell",
+      "loadBasis": "per_dumbbell",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 180,
+      "muscles": [{ "muscle": "chest", "contribution": 1 }, { "muscle": "shoulders", "contribution": 0.5 }, { "muscle": "triceps", "contribution": 0.5 }],
+      "guidance": []
+    },
+    {
+      "slug": "seated-machine-chest-press",
+      "name": "Seated Machine Chest Press",
+      "equipment": "machine",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 50,
+      "defaultRestSeconds": 180,
+      "muscles": [{ "muscle": "chest", "contribution": 1 }, { "muscle": "shoulders", "contribution": 0.5 }, { "muscle": "triceps", "contribution": 0.5 }],
+      "guidance": []
+    },
+    {
+      "slug": "chest-fly",
+      "name": "Chest Fly",
+      "equipment": "machine-or-cable",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "chest", "contribution": 1 }],
+      "guidance": []
+    },
+    {
+      "slug": "hack-squat",
+      "name": "Hack Squat",
+      "equipment": "machine",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 100,
+      "defaultRestSeconds": 180,
+      "muscles": [{ "muscle": "quads", "contribution": 1 }, { "muscle": "glutes", "contribution": 0.5 }],
+      "guidance": []
+    },
+    {
+      "slug": "leg-extension",
+      "name": "Leg Extension",
+      "equipment": "machine",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 50,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "quads", "contribution": 1 }],
+      "guidance": []
+    },
+    {
+      "slug": "ez-bar-preacher-curl",
+      "name": "EZ-Bar Preacher Curl",
+      "equipment": "ez-bar",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "biceps", "contribution": 1 }],
+      "guidance": []
+    },
+    {
+      "slug": "weighted-pull-up",
+      "name": "Weighted Pull-Up",
+      "equipment": "bodyweight",
+      "loadBasis": "added_bodyweight",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 180,
+      "muscles": [{ "muscle": "back", "contribution": 1 }, { "muscle": "biceps", "contribution": 0.5 }],
+      "guidance": ["If added weight prevents twelve clean reps, switch to bodyweight-only mode."]
+    },
+    {
+      "slug": "pull-up",
+      "name": "Pull-Up",
+      "equipment": "bodyweight",
+      "loadBasis": "bodyweight_only",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 180,
+      "muscles": [{ "muscle": "back", "contribution": 1 }, { "muscle": "biceps", "contribution": 0.5 }],
+      "guidance": []
+    },
+    {
+      "slug": "seated-row",
+      "name": "Seated Row",
+      "equipment": "machine-or-cable",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 50,
+      "defaultRestSeconds": 180,
+      "muscles": [{ "muscle": "back", "contribution": 1 }, { "muscle": "biceps", "contribution": 0.5 }],
+      "guidance": []
+    },
+    {
+      "slug": "lying-leg-curl",
+      "name": "Lying Leg Curl",
+      "equipment": "machine",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 50,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "hamstrings", "contribution": 1 }],
+      "guidance": []
+    },
+    {
+      "slug": "high-cable-rear-delt-sweep",
+      "name": "High-Cable Rear-Delt Sweep",
+      "equipment": "cable",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "shoulders", "contribution": 1 }, { "muscle": "back", "contribution": 0.5 }],
+      "guidance": []
+    },
+    {
+      "slug": "skull-crushers",
+      "name": "Skull Crushers",
+      "equipment": "ez-bar",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "triceps", "contribution": 1 }],
+      "guidance": []
+    },
+    {
+      "slug": "back-squat",
+      "name": "Back Squat",
+      "equipment": "barbell",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 100,
+      "defaultRestSeconds": 210,
+      "muscles": [{ "muscle": "quads", "contribution": 1 }, { "muscle": "glutes", "contribution": 1 }, { "muscle": "hamstrings", "contribution": 0.5 }],
+      "guidance": ["Depth and technique take precedence over reaching the top of the rep range.", "Record whether the limiting factor was cardiovascular or muscular."],
+      "techniqueCheck": "squat"
+    },
+    {
+      "slug": "seated-shoulder-press",
+      "name": "Seated Shoulder Press",
+      "equipment": "machine-or-dumbbell",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 50,
+      "defaultRestSeconds": 180,
+      "muscles": [{ "muscle": "shoulders", "contribution": 1 }, { "muscle": "triceps", "contribution": 0.5 }],
+      "guidance": []
+    },
+    {
+      "slug": "lateral-raise",
+      "name": "Lateral Raise",
+      "equipment": "dumbbell-or-cable",
+      "loadBasis": "per_dumbbell",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "shoulders", "contribution": 1 }],
+      "guidance": []
+    },
+    {
+      "slug": "dumbbell-hammer-curl",
+      "name": "Dumbbell Hammer Curl",
+      "equipment": "dumbbell",
+      "loadBasis": "per_dumbbell",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "biceps", "contribution": 1 }],
+      "guidance": []
+    },
+    {
+      "slug": "standing-weighted-calf-raise",
+      "name": "Standing Weighted Calf Raise",
+      "equipment": "machine",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 50,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "calves", "contribution": 1 }],
+      "guidance": []
+    },
+    {
+      "slug": "metal-bar-cable-triceps-pushdown",
+      "name": "Metal-Bar Cable Triceps Pushdown",
+      "equipment": "cable",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "triceps", "contribution": 1 }],
+      "guidance": []
+    },
+    {
+      "slug": "cable-crunch",
+      "name": "Cable Crunch",
+      "equipment": "cable",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 25,
+      "defaultRestSeconds": 105,
+      "muscles": [{ "muscle": "abs", "contribution": 1 }],
+      "guidance": []
+    },
+    {
+      "slug": "romanian-deadlift",
+      "name": "Romanian Deadlift",
+      "equipment": "barbell",
+      "loadBasis": "external_total",
+      "defaultIncrementTenthsLb": 100,
+      "defaultRestSeconds": 210,
+      "muscles": [{ "muscle": "hamstrings", "contribution": 1 }, { "muscle": "glutes", "contribution": 1 }, { "muscle": "back", "contribution": 0.5 }],
+      "guidance": ["Use a controlled eccentric, stable torso, hamstring stretch, and glute engagement.", "Track hamstring/glute stimulus and lower-back fatigue."],
+      "techniqueCheck": "rdl"
+    }
+  ],
+  "weekRules": [
+    { "week": 1, "phase": "Reacclimation", "targetRir": { "min": 4, "max": 5 }, "isDeload": false, "setRules": { "peak2": { "required": 1, "optional": 0 }, "peak3": { "required": 1, "optional": 0 }, "peak4": { "required": 1, "optional": 0 } } },
+    { "week": 2, "phase": "Reacclimation", "targetRir": { "min": 4, "max": 4 }, "isDeload": false, "setRules": { "peak2": { "required": 1, "optional": 0 }, "peak3": { "required": 1, "optional": 0 }, "peak4": { "required": 2, "optional": 0 } } },
+    { "week": 3, "phase": "Reacclimation", "targetRir": { "min": 3, "max": 4 }, "isDeload": false, "setRules": { "peak2": { "required": 1, "optional": 0 }, "peak3": { "required": 2, "optional": 0 }, "peak4": { "required": 2, "optional": 0 } } },
+    { "week": 4, "phase": "Volume Build", "targetRir": { "min": 3, "max": 3 }, "isDeload": false, "setRules": { "peak2": { "required": 1, "optional": 0 }, "peak3": { "required": 2, "optional": 0 }, "peak4": { "required": 3, "optional": 0 } } },
+    { "week": 5, "phase": "Volume Build", "targetRir": { "min": 2, "max": 3 }, "isDeload": false, "setRules": { "peak2": { "required": 2, "optional": 0 }, "peak3": { "required": 2, "optional": 0 }, "peak4": { "required": 3, "optional": 0 } } },
+    { "week": 6, "phase": "Volume Build", "targetRir": { "min": 2, "max": 2 }, "isDeload": false, "setRules": { "peak2": { "required": 2, "optional": 0 }, "peak3": { "required": 3, "optional": 0 }, "peak4": { "required": 3, "optional": 0 } } },
+    { "week": 7, "phase": "Full Volume", "targetRir": { "min": 2, "max": 2 }, "isDeload": false, "setRules": { "peak2": { "required": 2, "optional": 0 }, "peak3": { "required": 3, "optional": 0 }, "peak4": { "required": 4, "optional": 0 } } },
+    { "week": 8, "phase": "Full Volume", "targetRir": { "min": 1, "max": 2 }, "isDeload": false, "setRules": { "peak2": { "required": 2, "optional": 0 }, "peak3": { "required": 3, "optional": 0 }, "peak4": { "required": 4, "optional": 0 } } },
+    { "week": 9, "phase": "Full Volume", "targetRir": { "min": 1, "max": 2 }, "isDeload": false, "setRules": { "peak2": { "required": 2, "optional": 0 }, "peak3": { "required": 3, "optional": 0 }, "peak4": { "required": 4, "optional": 0 } } },
+    { "week": 10, "phase": "Peak", "targetRir": { "min": 1, "max": 1 }, "isDeload": false, "setRules": { "peak2": { "required": 2, "optional": 0 }, "peak3": { "required": 3, "optional": 0 }, "peak4": { "required": 4, "optional": 0 } } },
+    { "week": 11, "phase": "Peak", "targetRir": { "min": 1, "max": 1 }, "isDeload": false, "setRules": { "peak2": { "required": 2, "optional": 0 }, "peak3": { "required": 3, "optional": 0 }, "peak4": { "required": 4, "optional": 0 } } },
+    { "week": 12, "phase": "Deload", "targetRir": { "min": 4, "max": 5 }, "isDeload": true, "setRules": { "peak2": { "required": 1, "optional": 0 }, "peak3": { "required": 1, "optional": 1 }, "peak4": { "required": 2, "optional": 0 } } }
+  ],
+  "workoutTemplates": [
+    {
+      "sequence": 1,
+      "originalDayLabel": "Monday",
+      "name": "Chest + Quads + Biceps",
+      "exercises": [
+        { "exercise": "incline-dumbbell-press", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
+        { "exercise": "seated-machine-chest-press", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
+        { "exercise": "chest-fly", "repMin": 12, "repMax": 20, "peakSets": 2, "guidance": [] },
+        { "exercise": "hack-squat", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
+        { "exercise": "leg-extension", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
+        { "exercise": "ez-bar-preacher-curl", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] }
+      ]
+    },
+    {
+      "sequence": 2,
+      "originalDayLabel": "Tuesday",
+      "name": "Back + Hamstrings + Triceps",
+      "exercises": [
+        { "exercise": "weighted-pull-up", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
+        { "exercise": "seated-row", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
+        { "exercise": "lying-leg-curl", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
+        { "exercise": "high-cable-rear-delt-sweep", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
+        { "exercise": "skull-crushers", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] }
+      ]
+    },
+    {
+      "sequence": 3,
+      "originalDayLabel": "Wednesday",
+      "name": "Squat + Shoulders + Biceps + Calves",
+      "exercises": [
+        { "exercise": "back-squat", "repMin": 8, "repMax": 12, "peakSets": 4, "guidance": [] },
+        { "exercise": "seated-shoulder-press", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
+        { "exercise": "lateral-raise", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
+        { "exercise": "dumbbell-hammer-curl", "repMin": 12, "repMax": 20, "peakSets": 2, "guidance": [] },
+        { "exercise": "standing-weighted-calf-raise", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] }
+      ]
+    },
+    {
+      "sequence": 4,
+      "originalDayLabel": "Thursday",
+      "name": "Back + Quads + Triceps + Abs",
+      "exercises": [
+        { "exercise": "pull-up", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
+        { "exercise": "seated-row", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
+        { "exercise": "leg-extension", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
+        { "exercise": "high-cable-rear-delt-sweep", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
+        { "exercise": "metal-bar-cable-triceps-pushdown", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
+        { "exercise": "cable-crunch", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] }
+      ]
+    },
+    {
+      "sequence": 5,
+      "originalDayLabel": "Friday",
+      "name": "Chest + Hamstrings + Biceps + Calves",
+      "exercises": [
+        { "exercise": "seated-machine-chest-press", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
+        { "exercise": "incline-dumbbell-press", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
+        { "exercise": "chest-fly", "repMin": 12, "repMax": 20, "peakSets": 2, "guidance": [] },
+        { "exercise": "romanian-deadlift", "repMin": 12, "repMax": 15, "peakSets": 4, "guidance": [] },
+        { "exercise": "lying-leg-curl", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
+        { "exercise": "ez-bar-preacher-curl", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
+        { "exercise": "standing-weighted-calf-raise", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] }
+      ]
+    }
+  ]
+}
