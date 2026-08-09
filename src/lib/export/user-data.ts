@@ -48,8 +48,8 @@ export async function buildCompleteExport() {
     exportSchemaVersion: "1.0",
     exportedAt: new Date().toISOString(),
     units: { weight: "lb", weightStorage: "integer tenths of a pound" },
-    program: activeProgram.document,
-    cycleStartsOn: activeProgram.startsOn,
+    program: activeProgram?.document ?? null,
+    cycleStartsOn: activeProgram?.startsOn ?? null,
     workoutSessions: sessions,
     weeklyCheckins: checkins,
   };

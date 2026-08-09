@@ -6,6 +6,7 @@ import { evaluateProgression } from "@/lib/workout/progression";
 import { flushWorkoutOutbox } from "@/lib/workout/sync";
 import type { ActiveWorkoutSession } from "@/lib/workout/types";
 import Link from "next/link";
+import { BottomNavigation } from "@/components/bottom-navigation";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -159,6 +160,7 @@ export function WorkoutSummary() {
           <Link className="primary-link" href="/">Return to Today</Link>
         </div>
       </section>
+      <BottomNavigation />
     </main>
   );
 }

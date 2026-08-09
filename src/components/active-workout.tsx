@@ -8,7 +8,8 @@ import { findPreviousExercise, formatPreviousSets } from "@/lib/workout/previous
 import { flushWorkoutOutbox, syncWorkoutSession, WorkoutSyncConflictError } from "@/lib/workout/sync";
 import type { ActiveWorkoutSession, WorkoutSetDraft } from "@/lib/workout/types";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 function loadLabel(loadBasis: string): string {
   if (loadBasis === "per_dumbbell") return "lb each";
@@ -37,6 +38,7 @@ export function ActiveWorkout() {
   const [history, setHistory] = useState<ActiveWorkoutSession[]>([]);
   const [recordCelebration, setRecordCelebration] = useState<string | null>(null);
   const syncTimer = useRef<number | null>(null);
+  const cancelPanel = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     workoutRepository
@@ -337,6 +339,7 @@ export function ActiveWorkout() {
         <span className={`sync-chip sync-chip-${session.syncStatus}`}>
           {session.syncStatus === "synced" ? "Synced" : session.syncStatus === "conflict" ? "Conflict" : "Pending"}
         </span>
+        <Link className="workout-settings-link" href="/settings" aria-label="Open settings">⚙</Link>
       </header>
 
       {session.restEndsAt ? (
@@ -350,8 +353,10 @@ export function ActiveWorkout() {
       ) : null}
 
       {recordCelebration ? (
-        <div className="record-celebration" role="status" aria-live="polite">
-          <span aria-hidden="true">✦</span><strong>{recordCelebration}</strong><small>{exercise.name}</small>
+        <div className="confetti-celebration" role="status" aria-live="polite">
+          <span className="sr-only">{recordCelebration} for {exercise.name}</span>
+          {Array.from({ length: 42 }, (_, index) => <i aria-hidden="true" key={index} style={{ "--x": `${(index * 37) % 100}%`, "--delay": `${(index % 9) * -55}ms`, "--drift": `${((index % 7) - 3) * 3}vw`, "--color": `hsl(${(index * 47) % 360} 82% 58%)` } as CSSProperties} />)}
+          <strong>{recordCelebration}</strong>
         </div>
       ) : null}
 
@@ -364,7 +369,7 @@ export function ActiveWorkout() {
       ) : null}
 
       {confirmCancel ? (
-        <section className="cancel-workout-panel" role="alertdialog" aria-labelledby="cancel-workout-title" aria-describedby="cancel-workout-description">
+        <section className="cancel-workout-panel" ref={cancelPanel} role="alertdialog" aria-labelledby="cancel-workout-title" aria-describedby="cancel-workout-description" tabIndex={-1}>
           <div><strong id="cancel-workout-title">Cancel this workout?</strong><p id="cancel-workout-description">Its entries will be discarded and this workout will return to the front of your program queue.</p></div>
           <button className="danger-button" disabled={cancelling} onClick={cancelWorkout} type="button">{cancelling ? "Cancelling…" : "Discard Accidental Workout"}</button>
           <button disabled={cancelling} onClick={() => setConfirmCancel(false)} type="button">Keep Workout</button>
@@ -531,7 +536,7 @@ export function ActiveWorkout() {
         ) : null}
 
         {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
-        {!confirmCancel ? <button className="cancel-workout-trigger" onClick={() => setConfirmCancel(true)} type="button">Cancel Workout</button> : null}
+        {!confirmCancel ? <button className="cancel-workout-trigger" onClick={() => { setConfirmCancel(true); window.requestAnimationFrame(() => { window.scrollTo({ top: 0, behavior: "smooth" }); cancelPanel.current?.focus(); }); }} type="button">Cancel Workout</button> : null}
       </section>
 
       <section className="workout-itinerary" aria-labelledby="up-next-title">

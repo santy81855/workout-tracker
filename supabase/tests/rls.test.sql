@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(31);
+select plan(35);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -208,10 +208,17 @@ select is((select scheduled.status::text from public.scheduled_workouts schedule
 
 select lives_ok(
   $$select public.activate_program_cycle((select source_json from public.program_revisions order by created_at limit 1), '2026-11-02')$$,
-  'owner can archive the completed cycle and activate a validated replacement'
+  'owner can pause the current cycle and activate a validated replacement'
 );
 select is((select count(*)::integer from public.program_cycles where status = 'active'), 1, 'cycle activation leaves exactly one active cycle');
 select is((select count(*)::integer from public.program_cycles), 2, 'cycle activation preserves the archived cycle');
+select is((select count(*)::integer from public.program_cycles where status = 'planned'), 1, 'the replaced cycle is paused');
+select is(jsonb_array_length(public.get_program_library()), 2, 'the private plan library returns both owned cycles');
+select lives_ok(
+  $$select public.resume_program_cycle((select id from public.program_cycles where status = 'planned' limit 1))$$,
+  'owner can resume a paused cycle'
+);
+select is((select count(*)::integer from public.program_cycles where status = 'active'), 1, 'resuming still leaves exactly one active cycle');
 
 select * from finish();
 rollback;

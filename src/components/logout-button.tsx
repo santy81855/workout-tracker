@@ -4,6 +4,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { workoutRepository } from "@/lib/workout/indexeddb-repository";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { clearActiveProgramRecord } from "@/lib/program/active-program";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export function LogoutButton() {
     setError(null);
     try {
       await workoutRepository.clearAllData();
+      await clearActiveProgramRecord();
       if ("caches" in window) {
         await Promise.all((await caches.keys()).map((cacheName) => caches.delete(cacheName)));
       }

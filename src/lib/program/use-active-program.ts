@@ -1,15 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { defaultProgram, getActiveProgramRecord, type ActiveProgramRecord } from "./active-program";
+import { clearActiveProgramRecord, defaultProgram, getActiveProgramRecord, saveActiveProgramRecord, type ActiveProgramRecord } from "./active-program";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { programDocumentSchema } from "./schema";
 
 export function useActiveProgram() {
-  const [record, setRecord] = useState<ActiveProgramRecord>({
-    document: defaultProgram,
-    startsOn: "2026-08-10",
-    activatedAt: "2026-08-08T00:00:00.000Z",
-  });
+  const [record, setRecord] = useState<ActiveProgramRecord | null>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { void getActiveProgramRecord().then(setRecord).finally(() => setLoading(false)); }, []);
-  return { ...record, loading, setRecord };
+  useEffect(() => {
+    void getActiveProgramRecord().then(async (cached) => {
+      try {
+        const { data, error } = await createSupabaseBrowserClient().rpc("get_program_library");
+        if (error) throw error;
+        const active = (data as Array<{ status: string; startsOn: string; document: unknown }> | null)?.find((cycle) => cycle.status === "active");
+        if (!active) { await clearActiveProgramRecord(); setRecord(null); return; }
+        const next = { document: programDocumentSchema.parse(active.document), startsOn: active.startsOn, activatedAt: new Date().toISOString() };
+        await saveActiveProgramRecord(next); setRecord(next);
+      } catch { setRecord(cached); }
+    }).finally(() => setLoading(false));
+  }, []);
+  return { document: record?.document ?? defaultProgram, startsOn: record?.startsOn ?? "", activatedAt: record?.activatedAt ?? "", hasProgram: record !== null, loading, setRecord };
 }

@@ -10,6 +10,7 @@ import { flushWorkoutOutbox } from "@/lib/workout/sync";
 import type { ActiveWorkoutSession } from "@/lib/workout/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { PlanLibrary } from "@/components/plan-library";
 
 interface NextWorkout {
   sequenceInCycle: number;
@@ -19,7 +20,7 @@ interface NextWorkout {
 
 export function TodayDashboard() {
   const router = useRouter();
-  const { document: program, startsOn: cycleStartsOn, loading: programLoading } = useActiveProgram();
+  const { document: program, startsOn: cycleStartsOn, hasProgram, loading: programLoading } = useActiveProgram();
   const [activeSession, setActiveSession] = useState<ActiveWorkoutSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +78,8 @@ export function TodayDashboard() {
   const workingSets = displayedSession
     ? displayedSession.exercises.reduce((total, exercise) => total + exercise.sets.length, 0)
     : template.exercises.reduce((total, exercise) => total + weekRule.setRules[`peak${exercise.peakSets}` as "peak2" | "peak3" | "peak4"].required, 0);
+
+  if (!programLoading && !hasProgram) return <PlanLibrary showStarter />;
 
   return (
     <>
