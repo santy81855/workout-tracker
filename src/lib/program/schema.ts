@@ -54,8 +54,8 @@ export const exerciseDefinitionSchema = z
   });
 
 export const programWeekRuleSchema = z.object({
-  week: z.number().int().min(1).max(12),
-  phase: z.enum(["Reacclimation", "Volume Build", "Full Volume", "Peak", "Deload"]),
+  week: z.number().int().min(1).max(52),
+  phase: z.string().trim().min(1).max(80),
   targetRir: z.object({
     min: z.number().int().min(0).max(6),
     max: z.number().int().min(0).max(6),
@@ -93,19 +93,26 @@ export const programDocumentSchema = z
     displayTitle: z.string().trim().min(1).max(80).optional(),
     splitType: z.string().trim().min(1).max(80).optional(),
     description: z.string().trim().min(1).max(1000),
-    weekCount: z.literal(12),
-    workoutsPerWeek: z.literal(5),
+    weekCount: z.number().int().min(1).max(52),
+    workoutsPerWeek: z.number().int().min(1).max(7),
     defaultIncrementTenthsLb: z.number().int().positive(),
     muscleGroups: z.array(slugSchema).min(1),
     exercises: z.array(exerciseDefinitionSchema).min(1),
-    weekRules: z.array(programWeekRuleSchema).length(12),
-    workoutTemplates: z.array(workoutTemplateSchema).length(5),
+    weekRules: z.array(programWeekRuleSchema).min(1).max(52),
+    workoutTemplates: z.array(workoutTemplateSchema).min(1).max(7),
   })
   .superRefine((program, context) => {
     const exerciseSlugs = new Set(program.exercises.map((exercise) => exercise.slug));
     const muscleSlugs = new Set(program.muscleGroups);
     const weeks = new Set(program.weekRules.map((rule) => rule.week));
     const templateSequences = new Set(program.workoutTemplates.map((template) => template.sequence));
+
+    if (program.weekRules.length !== program.weekCount) {
+      context.addIssue({ code: "custom", path: ["weekRules"], message: `Expected exactly ${program.weekCount} week rules` });
+    }
+    if (program.workoutTemplates.length !== program.workoutsPerWeek) {
+      context.addIssue({ code: "custom", path: ["workoutTemplates"], message: `Expected exactly ${program.workoutsPerWeek} workout templates` });
+    }
 
     if (exerciseSlugs.size !== program.exercises.length) {
       context.addIssue({ code: "custom", path: ["exercises"], message: "Exercise slugs must be unique" });

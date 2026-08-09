@@ -43,17 +43,18 @@ export function TodayDashboard() {
         const highestResolvedSequence = resolvedSessions
           .reduce((highest, session) => Math.max(highest, session.sequenceInCycle), 0);
         setResolvedCount(resolvedSequences.size);
-        setCycleComplete(!active && highestResolvedSequence >= 60);
-        const sequenceInCycle = Math.min(60, highestResolvedSequence + 1);
+        const totalSessions = program.weekCount * program.workoutsPerWeek;
+        setCycleComplete(!active && highestResolvedSequence >= totalSessions);
+        const sequenceInCycle = Math.min(totalSessions, highestResolvedSequence + 1);
         setNextWorkout({
           sequenceInCycle,
-          programWeek: Math.ceil(sequenceInCycle / 5) as ProgramWeek,
-          templateSequence: ((sequenceInCycle - 1) % 5) + 1,
+          programWeek: Math.ceil(sequenceInCycle / program.workoutsPerWeek) as ProgramWeek,
+          templateSequence: ((sequenceInCycle - 1) % program.workoutsPerWeek) + 1,
         });
       })
       .catch(() => setError("The locally saved workout could not be loaded."))
       .finally(() => setLoading(false));
-  }, [program.slug, cycleStartsOn]);
+  }, [program.slug, program.weekCount, program.workoutsPerWeek, cycleStartsOn]);
 
   async function startWorkout() {
     setError(null);
@@ -78,6 +79,7 @@ export function TodayDashboard() {
   const workingSets = displayedSession
     ? displayedSession.exercises.reduce((total, exercise) => total + exercise.sets.length, 0)
     : template.exercises.reduce((total, exercise) => total + weekRule.setRules[`peak${exercise.peakSets}` as "peak2" | "peak3" | "peak4"].required, 0);
+  const totalSessions = program.weekCount * program.workoutsPerWeek;
 
   if (!programLoading && !hasProgram) return <PlanLibrary showStarter />;
 
@@ -105,7 +107,7 @@ export function TodayDashboard() {
         {activeSession
           ? "An active workout is saved on this device."
           : cycleComplete
-            ? "All 60 sessions are resolved. Start a new cycle from Settings when its plan is ready."
+            ? `All ${totalSessions} sessions are complete. Choose your next plan when you’re ready.`
             : displayedWeek === 1
               ? "Week 1 starts with one working set per exercise."
               : `You’re now training in Week ${displayedWeek}.`}
@@ -119,10 +121,10 @@ export function TodayDashboard() {
           <p className="eyebrow">Program status</p>
           <h2 id="program-status-title">{cycleComplete ? "Cycle complete" : weekRule.phase}</h2>
         </div>
-        <span className="metric">{resolvedCount} / 60</span>
+        <span className="metric">{resolvedCount} / {totalSessions}</span>
       </div>
-      <div className="progress-track" aria-label={`${resolvedCount} of sixty workouts resolved`}>
-        <span style={{ width: `${Math.min(100, (resolvedCount / 60) * 100)}%` }} />
+      <div className="progress-track" aria-label={`${resolvedCount} of ${totalSessions} workouts complete`}>
+        <span style={{ width: `${Math.min(100, (resolvedCount / totalSessions) * 100)}%` }} />
       </div>
       <p className="muted-copy">Finishing or intentionally shortening a workout moves you to the next session.</p>
     </section>

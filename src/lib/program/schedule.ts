@@ -100,5 +100,5 @@ export function getCurrentProgramWeek(
   workouts: readonly Pick<ScheduledWorkoutDraft, "programWeek" | "status">[],
 ): ProgramWeek {
   const unresolved = workouts.find((workout) => !RESOLVED_STATES.has(workout.status));
-  return unresolved?.programWeek ?? 12;
+  return unresolved?.programWeek ?? Math.max(...workouts.map((workout) => workout.programWeek), 1);
 }

@@ -886,8 +886,8 @@ h2 {
 
 .confetti-celebration { position: fixed; inset: 0; z-index: 90; overflow: hidden; pointer-events: none; }
 .confetti-celebration strong { position: absolute; top: 42%; left: 50%; width: min(calc(100% - 3rem), 22rem); padding: .9rem 1rem; border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border)); border-radius: 999px; background: color-mix(in srgb, var(--surface-raised) 94%, transparent); box-shadow: var(--shadow); font-size: .9rem; text-align: center; animation: celebration-pop 2.4s ease both; transform: translate(-50%, -50%); }
-.confetti-celebration i { position: absolute; top: -8vh; left: var(--x); width: .55rem; height: 1rem; border-radius: .15rem; background: var(--color); animation: confetti-fall 2.35s cubic-bezier(.2,.65,.35,1) var(--delay) both; }
-@keyframes confetti-fall { 0% { opacity: 0; transform: translate3d(0,-8vh,0) rotate(0); } 8% { opacity: 1; } 100% { opacity: 0; transform: translate3d(var(--drift),108vh,0) rotate(780deg); } }
+.confetti-celebration i { position: absolute; top: 58%; left: 50%; width: .65rem; height: 1.15rem; border-radius: .15rem; background: var(--color); animation: confetti-burst var(--duration) cubic-bezier(.16,.7,.25,1) var(--delay) both; }
+@keyframes confetti-burst { 0% { opacity: 0; transform: translate3d(0,0,0) rotate(0) scale(.4); } 5% { opacity: 1; } 38% { opacity: 1; transform: translate3d(var(--dx),var(--peak),0) rotate(var(--spin-mid)) scale(1); } 100% { opacity: 0; transform: translate3d(var(--dx-final),52vh,0) rotate(var(--spin)) scale(.85); } }
 @keyframes celebration-pop { 0%, 100% { opacity: 0; transform: translate(-50%,-50%) scale(.75); } 12%, 82% { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
 
 .exercise-heading {
@@ -1640,6 +1640,8 @@ h2 {
 .signup-panel { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 .signup-panel summary { min-height: 2.75rem; cursor: pointer; color: var(--accent-strong); font-size: .85rem; font-weight: 800; }
 .signup-panel > .muted-copy { margin-bottom: 1rem; }
+.auth-switch { display: grid; justify-items: center; gap: .35rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: .75rem; }
+.auth-switch button { min-height: 2.75rem; padding: 0 1rem; border: 0; background: transparent; color: var(--accent-strong); font-weight: 800; }
 .field-group small { color: var(--muted); font-size: .7rem; }
 
 .file-picker {

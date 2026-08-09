@@ -5,9 +5,15 @@ import type { ActiveWorkoutSession } from "./types";
 
 export async function listRemoteSessions(): Promise<ActiveWorkoutSession[]> {
   const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase.rpc("get_workout_history");
+  const [{ data, error }, { data: library }] = await Promise.all([supabase.rpc("get_workout_history"), supabase.rpc("get_program_library")]);
   if (error) throw new Error(error.message);
-  return activeWorkoutSessionSchema.array().parse(data);
+  const sessions = activeWorkoutSessionSchema.array().parse(data);
+  const cycles = (library as Array<{ startsOn: string; document: { slug: string; workoutsPerWeek: number } }> | null) ?? [];
+  return sessions.map((session) => {
+    const cycle = cycles.find((candidate) => candidate.startsOn === session.cycleStartsOn && candidate.document.slug === session.programSlug);
+    const workoutsPerWeek = cycle?.document.workoutsPerWeek ?? 5;
+    return { ...session, templateSequence: ((session.sequenceInCycle - 1) % workoutsPerWeek) + 1 };
+  });
 }
 
 export async function listAvailableSessions(): Promise<ActiveWorkoutSession[]> {
