@@ -52,7 +52,8 @@ export function ProgressDashboard() {
   const completedSessions = sessions.filter((session) => session.status === "completed" || session.status === "partial");
   const currentCycleSessions = completedSessions.filter((session) => session.programSlug === program.slug && session.cycleStartsOn === cycleStartsOn);
   const highestSequence = currentCycleSessions.reduce((highest, session) => Math.max(highest, session.sequenceInCycle), 0);
-  const currentWeek = Math.max(1, Math.min(12, Math.ceil((highestSequence + (highestSequence < 60 ? 1 : 0)) / 5)));
+  const totalSessions = program.weekCount * program.workoutsPerWeek;
+  const currentWeek = Math.max(1, Math.min(program.weekCount, Math.ceil((highestSequence + (highestSequence < totalSessions ? 1 : 0)) / program.workoutsPerWeek)));
   const currentWeekSessions = currentCycleSessions.filter((session) => session.programWeek === currentWeek);
   const completedSets = calculateMuscleSets(currentWeekSessions, program);
   const expectedSets = calculateExpectedMuscleSets(currentWeek, program);

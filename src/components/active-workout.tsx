@@ -82,7 +82,7 @@ export function ActiveWorkout() {
 
   useEffect(() => {
     if (!recordCelebration) return;
-    const timeout = window.setTimeout(() => setRecordCelebration(null), 2_600);
+    const timeout = window.setTimeout(() => setRecordCelebration(null), 4_500);
     return () => window.clearTimeout(timeout);
   }, [recordCelebration]);
 
@@ -355,7 +355,7 @@ export function ActiveWorkout() {
       {recordCelebration ? (
         <div className="confetti-celebration" role="status" aria-live="polite">
           <span className="sr-only">{recordCelebration} for {exercise.name}</span>
-          {Array.from({ length: 42 }, (_, index) => <i aria-hidden="true" key={index} style={{ "--x": `${(index * 37) % 100}%`, "--delay": `${(index % 9) * -55}ms`, "--drift": `${((index % 7) - 3) * 3}vw`, "--color": `hsl(${(index * 47) % 360} 82% 58%)` } as CSSProperties} />)}
+          {Array.from({ length: 80 }, (_, index) => { const dx = ((index * 61) % 110) - 55; const spin = 540 + ((index * 71) % 720); return <i aria-hidden="true" key={index} style={{ "--dx": `${dx}vw`, "--dx-final": `${dx * 1.12}vw`, "--peak": `${-28 - ((index * 43) % 45)}vh`, "--delay": `${(index % 13) * -38}ms`, "--spin-mid": `${spin * .55}deg`, "--spin": `${spin}deg`, "--color": `hsl(${(index * 47) % 360} 86% 58%)`, "--duration": `${3.1 + (index % 7) * .16}s` } as CSSProperties} />; })}
           <strong>{recordCelebration}</strong>
         </div>
       ) : null}

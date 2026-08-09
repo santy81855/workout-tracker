@@ -9,8 +9,10 @@ import Link from "next/link";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useActiveProgram } from "@/lib/program/use-active-program";
 
 export function WorkoutSummary() {
+  const { document: program } = useActiveProgram();
   const searchParams = useSearchParams();
   const [session, setSession] = useState<ActiveWorkoutSession | null>(null);
   const [draft, setDraft] = useState<ActiveWorkoutSession | null>(null);
@@ -156,7 +158,7 @@ export function WorkoutSummary() {
           {editing ? (
             <><button className="primary-button" onClick={saveCorrections} type="button">Save Corrections</button><button className="secondary-button" onClick={() => { setEditing(false); setDraft(null); }} type="button">Cancel</button></>
           ) : <button className="secondary-button" onClick={beginEditing} type="button">Correct Workout</button>}
-          {session.sequenceInCycle % 5 === 0 ? <Link className="weekly-review-link" href={`/check-in?week=${session.programWeek}`}>Complete Week {session.programWeek} Review</Link> : null}
+          {session.templateSequence === program.workoutsPerWeek ? <Link className="weekly-review-link" href={`/check-in?week=${session.programWeek}`}>Complete Week {session.programWeek} Review</Link> : null}
           <Link className="primary-link" href="/">Return to Today</Link>
         </div>
       </section>

@@ -12,12 +12,12 @@ export default function ProgramPage() {
     <main className="app-shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Twelve-week cycle</p>
+          <p className="eyebrow">Training plan</p>
           <h1>Program</h1>
         </div>
       </header>
 
-      <PlanLibrary showStarter={!loading && !hasProgram} />
+      {!hasProgram ? <PlanLibrary showStarter={!loading} /> : null}
 
       {!hasProgram ? null : <>
 
@@ -29,7 +29,7 @@ export default function ProgramPage() {
         <div className="program-summary" aria-label="Program summary">
           <span><strong>{program.weekCount}</strong> weeks</span>
           <span><strong>{program.workoutsPerWeek}</strong> workouts per week</span>
-          <span><strong>60</strong> total sessions</span>
+          <span><strong>{program.weekCount * program.workoutsPerWeek}</strong> total sessions</span>
         </div>
         {program.splitType ? <span className="split-type-pill">{program.splitType}</span> : null}
       </section>
@@ -57,6 +57,8 @@ export default function ProgramPage() {
         </div>
         <p className="legend-copy">Set counts are shown for exercises that peak at 4 / 3 / 2 sets.</p>
       </section>
+
+      <PlanLibrary />
 
       <section className="program-section" aria-labelledby="training-days-title">
         <div className="section-heading">

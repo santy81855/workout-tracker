@@ -43,4 +43,14 @@ describe("program document", () => {
     invalid.workoutTemplates[0].exercises[0].exercise = "not-a-real-exercise";
     expect(programDocumentSchema.safeParse(invalid).success).toBe(false);
   });
+
+  it("accepts valid programs with different week and workout counts", () => {
+    const flexible = structuredClone(programJson);
+    flexible.slug = "eight-week-six-day-plan";
+    flexible.weekCount = 8;
+    flexible.weekRules = flexible.weekRules.slice(0, 8);
+    flexible.workoutsPerWeek = 6;
+    flexible.workoutTemplates.push({ ...structuredClone(flexible.workoutTemplates[0]), sequence: 6, originalDayLabel: "Saturday", name: "Sixth Day" });
+    expect(programDocumentSchema.safeParse(flexible).success).toBe(true);
+  });
 });

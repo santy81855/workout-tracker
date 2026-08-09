@@ -1,6 +1,6 @@
 "use client";
 
-import { defaultProgram, saveActiveProgramRecord } from "@/lib/program/active-program";
+import { saveActiveProgramRecord } from "@/lib/program/active-program";
 import { programDocumentSchema, type ProgramDocument } from "@/lib/program/schema";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { workoutRepository } from "@/lib/workout/indexeddb-repository";
@@ -31,12 +31,6 @@ export function ProgramImportPanel() {
       if (!parsed.success) {
         const firstIssues = parsed.error.issues.slice(0, 5).map((issue) => `${issue.path.join(".") || "document"}: ${issue.message}`);
         setMessage(`Invalid program: ${firstIssues.join(" · ")}`);
-        return;
-      }
-      const supported = new Set(defaultProgram.exercises.map((exercise) => exercise.slug));
-      const unsupported = parsed.data.exercises.filter((exercise) => !supported.has(exercise.slug)).map((exercise) => exercise.slug);
-      if (unsupported.length > 0) {
-        setMessage(`These exercises are not in the installed catalog yet: ${unsupported.join(", ")}. Add catalog support before activating this plan.`);
         return;
       }
       setDocument(parsed.data);
