@@ -5,6 +5,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { workoutRepository } from "@/lib/workout/indexeddb-repository";
 import { getRemoteSession, listAvailableSessions } from "@/lib/workout/history";
 import { findPreviousExercise, formatPreviousSets } from "@/lib/workout/previous-performance";
+import { getExerciseGuidance } from "@/lib/program/exercise-guidance";
 import { flushWorkoutOutbox, syncWorkoutSession, WorkoutSyncConflictError } from "@/lib/workout/sync";
 import type { ActiveWorkoutSession, WorkoutSetDraft } from "@/lib/workout/types";
 import { useRouter } from "next/navigation";
@@ -37,6 +38,8 @@ export function ActiveWorkout() {
   const [cancelling, setCancelling] = useState(false);
   const [history, setHistory] = useState<ActiveWorkoutSession[]>([]);
   const [recordCelebration, setRecordCelebration] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
   const syncTimer = useRef<number | null>(null);
   const cancelPanel = useRef<HTMLElement | null>(null);
 
@@ -87,6 +90,7 @@ export function ActiveWorkout() {
   }, [recordCelebration]);
 
   const exercise = session?.exercises[session.activeExerciseIndex] ?? null;
+
   const activeSetIndex = exercise?.sets.findIndex((set) => set.status !== "completed" && set.status !== "skipped") ?? -1;
   const activeSet = activeSetIndex >= 0 ? exercise?.sets[activeSetIndex] ?? null : null;
   const remainingSeconds = (() => {
@@ -312,6 +316,8 @@ export function ActiveWorkout() {
   const exerciseComplete = exercise.sets.every((set) => set.status === "completed" || set.status === "skipped");
   const isLastExercise = session.activeExerciseIndex === session.exercises.length - 1;
   const performedDefinition = program.exercises.find((candidate) => candidate.slug === exercise.performedExerciseSlug);
+  const formGuidance = getExerciseGuidance(performedDefinition);
+  const editingNote = editingNoteId === exercise.id;
   const primaryMuscles = new Set(performedDefinition?.muscles.filter((muscle) => muscle.contribution === 1).map((muscle) => muscle.muscle));
   const replacementOptions = program.exercises
     .filter((candidate) => candidate.slug !== exercise.performedExerciseSlug)
@@ -535,11 +541,12 @@ export function ActiveWorkout() {
           </div>
         ) : null}
 
-        {(performedDefinition?.guidance.length ?? 0) > 0 ? <div className="exercise-guidance"><strong>Form reminders</strong><ul>{performedDefinition?.guidance.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
-        <details className="active-exercise-notes" open={Boolean(exercise.notes)}>
-          <summary>Exercise notes <span>Experimental</span></summary>
-          <label><span className="sr-only">Notes for {exercise.name}</span><textarea onChange={(event) => { const exercises = [...session.exercises]; exercises[session.activeExerciseIndex] = { ...exercise, notes: event.target.value }; void commit({ ...session, exercises }); }} placeholder="Setup cue, seat position, technique reminder…" value={exercise.notes} /></label>
-        </details>
+        {formGuidance.length > 0 ? <div className="exercise-guidance"><strong>Form reminders</strong><ul>{formGuidance.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
+        <div className="active-exercise-notes">
+          <div className="exercise-notes-heading"><strong>Exercise note</strong>{!editingNote ? <button onClick={() => { setNoteDraft(exercise.notes); setEditingNoteId(exercise.id); }} type="button">{exercise.notes ? "Edit note" : "+ Add note"}</button> : null}</div>
+          {exercise.notes && !editingNote ? <p className="exercise-note-display">{exercise.notes}</p> : null}
+          {editingNote ? <div className="exercise-note-editor"><label><span className="sr-only">Note for {exercise.name}</span><textarea autoFocus onChange={(event) => setNoteDraft(event.target.value)} placeholder="Setup cue, seat position, technique reminder…" value={noteDraft} /></label><div className="exercise-note-actions"><button onClick={() => { setNoteDraft(exercise.notes); setEditingNoteId(null); }} type="button">Cancel</button><button className="primary-button" onClick={() => { const exercises = [...session.exercises]; exercises[session.activeExerciseIndex] = { ...exercise, notes: noteDraft.trim() }; void commit({ ...session, exercises }); setEditingNoteId(null); }} type="button">Save note</button></div></div> : null}
+        </div>
 
         {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
         {!confirmCancel ? <button className="cancel-workout-trigger" onClick={() => { setConfirmCancel(true); window.requestAnimationFrame(() => { window.scrollTo({ top: 0, behavior: "smooth" }); cancelPanel.current?.focus(); }); }} type="button">Cancel Workout</button> : null}
