@@ -19,25 +19,26 @@ export function ProgramImportPanel() {
   const [document, setDocument] = useState<ProgramDocument | null>(null);
   const [startsOn, setStartsOn] = useState(upcomingMonday);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageKind, setMessageKind] = useState<"info" | "success" | "error">("info");
   const [activating, setActivating] = useState(false);
   const [saving, setSaving] = useState(false);
 
   async function readFile(file: File | undefined) {
-    setDocument(null); setMessage(null);
+    setDocument(null); setMessage(null); setMessageKind("info");
     if (!file) return;
-    if (file.size > 1_000_000) { setMessage("Program files must be smaller than 1 MB."); return; }
+    if (file.size > 1_000_000) { setMessageKind("error"); setMessage("Program files must be smaller than 1 MB."); return; }
     try {
       const raw: unknown = JSON.parse(await file.text());
       const parsed = programDocumentSchema.safeParse(raw);
       if (!parsed.success) {
         const firstIssues = parsed.error.issues.slice(0, 5).map((issue) => `${issue.path.join(".") || "document"}: ${issue.message}`);
-        setMessage(`Invalid program: ${firstIssues.join(" · ")}`);
+        setMessageKind("error"); setMessage(`Invalid program: ${firstIssues.join(" · ")}`);
         return;
       }
       setDocument(parsed.data);
       setMessage("Program structure is valid. Review the summary before activation.");
     } catch {
-      setMessage("This file is not valid JSON.");
+      setMessageKind("error"); setMessage("This file is not valid JSON.");
     }
   }
 
@@ -55,7 +56,7 @@ export function ProgramImportPanel() {
       router.push("/");
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "The program could not be activated.");
+      setMessageKind("error"); setMessage(error instanceof Error ? error.message : "The program could not be activated.");
       setActivating(false);
     }
   }
@@ -66,10 +67,10 @@ export function ProgramImportPanel() {
     try {
       const { error } = await createSupabaseBrowserClient().rpc("save_program_to_library", { p_document: document, p_starts_on: startsOn });
       if (error) throw new Error(error.message);
-      setMessage("Plan added to your library. Your current plan is still active.");
+      setMessageKind("success"); setMessage("Plan added to your library. Your current plan is still active.");
       setDocument(null);
       router.refresh();
-    } catch (error) { setMessage(error instanceof Error ? error.message : "The plan could not be saved."); }
+    } catch (error) { setMessageKind("error"); setMessage(error instanceof Error ? error.message : "The plan could not be saved."); }
     finally { setSaving(false); }
   }
 
@@ -87,7 +88,7 @@ export function ProgramImportPanel() {
           <button className="secondary-button" disabled={activating || saving} onClick={saveForLater} type="button">{saving ? "Adding…" : "Add to Library for Later"}</button>
         </div>
       ) : null}
-      {message ? <p className="form-message" role="status">{message}</p> : null}
+      {message ? <p className={`form-message form-message-${messageKind}`} role="status">{message}</p> : null}
     </section>
   );
 }

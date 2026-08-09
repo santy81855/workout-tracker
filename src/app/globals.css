@@ -654,6 +654,10 @@ h2 {
   font-size: 0.78rem;
 }
 
+.form-message-info { color: var(--muted); }
+.form-message-success { color: #438a59; }
+.form-message-error { color: #e75d5d; }
+
 .action-error {
   margin-top: 0.75rem;
   text-align: center;
@@ -904,6 +908,11 @@ h2 {
   font-size: clamp(1.65rem, 8vw, 2.35rem);
   line-height: 1.05;
 }
+
+.form-help-trigger { width: fit-content; min-height: 2.25rem; margin-top: .35rem; padding: 0 .65rem; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); border-radius: 999px; background: color-mix(in srgb, var(--accent) 7%, var(--background)); color: var(--accent-strong); font-size: .7rem; font-weight: 800; }
+.exercise-form-help { display: grid; gap: .65rem; margin-top: .85rem; padding: .85rem; border: 1px solid var(--border); border-radius: .85rem; background: var(--background); font-size: .75rem; }
+.exercise-form-help ul { margin: 0; padding-left: 1.15rem; color: var(--muted); line-height: 1.5; }
+.exercise-form-help > p { color: var(--muted); }
 
 .more-button {
   flex: none;

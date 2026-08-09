@@ -29,7 +29,7 @@ async function streamMedia(request: NextRequest, path: string, key: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const key = process.env.MUSCLEWIKI_API_KEY;
+  const key = process.env.MUSCLEWIKI_API_KEY?.trim();
   if (!key) return NextResponse.json({ error: "Exercise videos are not configured yet." }, { status: 503 });
   const media = request.nextUrl.searchParams.get("media");
   if (media) return streamMedia(request, media, key);
@@ -37,7 +37,12 @@ export async function GET(request: NextRequest) {
   const name = request.nextUrl.searchParams.get("name")?.trim();
   if (!name || name.length < 2 || name.length > 120) return NextResponse.json({ error: "A valid exercise name is required." }, { status: 400 });
   const response = await fetch(`${baseUrl}/search?q=${encodeURIComponent(name)}&limit=5`, { headers: { "X-API-Key": key }, next: { revalidate: 86400 } });
-  if (!response.ok) return NextResponse.json({ error: response.status === 404 ? "No matching form video was found." : "MuscleWiki is unavailable right now." }, { status: response.status === 404 ? 404 : 502 });
+  if (!response.ok) {
+    const error = response.status === 401 || response.status === 403
+      ? "MuscleWiki rejected the API key or subscription level. Check the key and direct API access in your MuscleWiki dashboard."
+      : response.status === 404 ? "No matching form video was found." : "MuscleWiki is unavailable right now.";
+    return NextResponse.json({ error }, { status: response.status === 404 ? 404 : 502 });
+  }
   const payload = await response.json() as { results?: MuscleWikiExercise[] } | MuscleWikiExercise[];
   const results = Array.isArray(payload) ? payload : (payload.results ?? []);
   const normalized = name.toLocaleLowerCase();
