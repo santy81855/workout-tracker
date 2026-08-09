@@ -1,6 +1,6 @@
 "use client";
 
-import { defaultProgram, saveActiveProgramRecord } from "@/lib/program/active-program";
+import { clearActiveProgramRecord, defaultProgram, saveActiveProgramRecord } from "@/lib/program/active-program";
 import type { ProgramDocument } from "@/lib/program/schema";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,7 @@ export function PlanLibrary({ showStarter = false }: { showStarter?: boolean }) 
   const [cycles, setCycles] = useState<LibraryCycle[] | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   useEffect(() => { void createSupabaseBrowserClient().rpc("get_program_library").then(({ data }) => setCycles((data as LibraryCycle[] | null) ?? [])); }, []);
 
   async function useStarter() {
@@ -33,10 +34,21 @@ export function PlanLibrary({ showStarter = false }: { showStarter?: boolean }) 
     router.push("/"); router.refresh();
   }
 
+  async function remove(cycle: LibraryCycle) {
+    setPending(`remove-${cycle.cycleId}`); setMessage(null);
+    const requiresConfirmation = cycle.status === "active" || cycle.completedSessions > 0;
+    const { error } = await createSupabaseBrowserClient().rpc("remove_program_cycle", { p_cycle_id: cycle.cycleId, p_confirm_in_progress: requiresConfirmation });
+    if (error) { setMessage(error.message); setPending(null); return; }
+    if (cycle.status === "active") await clearActiveProgramRecord();
+    setCycles((current) => current?.filter((item) => item.cycleId !== cycle.cycleId) ?? []);
+    setConfirmRemove(null); setPending(null);
+    router.refresh();
+  }
+
   return <section className="program-section plan-library" aria-labelledby="plan-library-title">
     <div className="section-heading"><div><p className="eyebrow">Your plans</p><h2 id="plan-library-title">Plan library</h2></div></div>
     {showStarter ? <article className="library-plan starter-plan"><div><span className="library-status">Starter plan</span><h3>{defaultProgram.displayTitle ?? defaultProgram.name}</h3><p>{defaultProgram.name} · {defaultProgram.splitType}</p></div><button className="primary-button" disabled={pending !== null} onClick={useStarter} type="button">{pending === "starter" ? "Starting…" : "Use this plan"}</button></article> : null}
-    {cycles === null ? <p className="muted-copy list-status">Loading your plans…</p> : cycles.length === 0 && !showStarter ? <p className="muted-copy list-status">No saved plans yet.</p> : <div className="library-list">{cycles.map((cycle) => <article className="library-plan" key={cycle.cycleId}><div><span className={`library-status library-status-${cycle.status}`}>{cycle.status === "planned" ? cycle.completedSessions ? "Paused" : "Saved" : cycle.status}</span><h3>{cycle.document.displayTitle ?? cycle.document.name}</h3><p>{cycle.document.name} · {cycle.completedSessions} of {cycle.document.weekCount * cycle.document.workoutsPerWeek} sessions</p></div>{cycle.status === "planned" ? <button disabled={pending !== null} onClick={() => resume(cycle)} type="button">{pending === cycle.cycleId ? "Starting…" : cycle.completedSessions ? "Resume" : "Start"}</button> : null}</article>)}</div>}
+    {cycles === null ? <p className="muted-copy list-status">Loading your plans…</p> : cycles.length === 0 && !showStarter ? <p className="muted-copy list-status">No saved plans yet.</p> : <div className="library-list">{cycles.map((cycle) => <article className="library-plan" key={cycle.cycleId}><div className="library-plan-copy"><span className={`library-status library-status-${cycle.status}`}>{cycle.status === "planned" ? cycle.completedSessions ? "Paused" : "Saved" : cycle.status}</span><h3>{cycle.document.displayTitle ?? cycle.document.name}</h3><p>{cycle.document.name} · {cycle.completedSessions} of {cycle.document.weekCount * cycle.document.workoutsPerWeek} sessions</p></div><div className="library-plan-actions">{cycle.status === "planned" ? <button disabled={pending !== null} onClick={() => resume(cycle)} type="button">{pending === cycle.cycleId ? "Starting…" : cycle.completedSessions ? "Resume" : "Start"}</button> : null}<button className="library-remove-button" disabled={pending !== null} onClick={() => setConfirmRemove(cycle.cycleId)} type="button">Remove</button></div>{confirmRemove === cycle.cycleId ? <div className="library-remove-confirm" role="alertdialog" aria-label={`Remove ${cycle.document.displayTitle ?? cycle.document.name}?`}><strong>Remove this plan?</strong><p>{cycle.status === "active" || cycle.completedSessions > 0 ? "It will disappear from your plan library, but completed workout history will be preserved." : "It will disappear from your plan library."}</p><div><button onClick={() => setConfirmRemove(null)} type="button">Keep plan</button><button className="danger-button" disabled={pending !== null} onClick={() => void remove(cycle)} type="button">{pending === `remove-${cycle.cycleId}` ? "Removing…" : "Remove plan"}</button></div></div> : null}</article>)}</div>}
     {message ? <p className="form-message" role="status">{message}</p> : null}
     {showStarter ? <div className="ai-plan-guide"><strong>Want a different plan?</strong><p>Download the example JSON from Settings and give it to an AI assistant along with your schedule, equipment, goals, experience, and limitations. Ask it to preserve the schema exactly, then import the resulting file in Settings. Review any training plan for safety and suitability before using it.</p></div> : null}
   </section>;

@@ -1167,10 +1167,15 @@ h2 {
 
 .exercise-guidance { margin-top: 1rem; padding: .85rem; border-radius: .85rem; background: var(--background); font-size: .75rem; }
 .exercise-guidance ul { margin: .4rem 0 0; padding-left: 1.15rem; color: var(--muted); line-height: 1.45; }
-.active-exercise-notes { margin-top: 1rem; border-top: 1px solid var(--border); }
-.active-exercise-notes summary { display: flex; align-items: center; justify-content: space-between; min-height: 3rem; cursor: pointer; font-size: .78rem; font-weight: 800; }
-.active-exercise-notes summary span { color: var(--muted); font-size: .62rem; text-transform: uppercase; }
+.active-exercise-notes { display: grid; gap: .65rem; margin-top: 1rem; padding-top: .8rem; border-top: 1px solid var(--border); }
+.exercise-notes-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 2.5rem; font-size: .78rem; }
+.exercise-notes-heading button { min-height: 2.5rem; padding: 0 .75rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--background); color: var(--accent-strong); font-weight: 800; }
+.exercise-note-display { padding: .75rem; border-radius: .8rem; background: var(--background); color: var(--muted); font-size: .76rem; line-height: 1.5; white-space: pre-wrap; }
+.exercise-note-editor { display: grid; gap: .65rem; }
 .active-exercise-notes textarea { width: 100%; min-height: 5rem; padding: .75rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--background); color: var(--text); resize: vertical; }
+.exercise-note-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.exercise-note-actions button { min-height: 2.75rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--background); color: var(--text); font-weight: 800; }
+.exercise-note-actions .primary-button { border: 0; background: var(--accent); color: var(--accent-text); }
 
 .exercise-complete p {
   margin-bottom: 0.75rem;
@@ -1928,24 +1933,40 @@ h2 {
 .library-list { display: grid; gap: .65rem; margin-top: .85rem; }
 .library-plan { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .75rem; margin-top: .85rem; padding: 1rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); }
 .library-list .library-plan { margin-top: 0; }
-.library-plan > div { min-width: 0; }
+.library-plan-copy { min-width: 0; }
 .library-plan h3 { margin: .3rem 0 .2rem; font-size: 1rem; }
 .library-plan p { color: var(--muted); font-size: .7rem; line-height: 1.4; }
 .library-plan button { min-height: 2.75rem; padding: 0 .8rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--background); color: var(--accent-strong); font-size: .75rem; font-weight: 800; }
 .library-plan .primary-button { width: auto; border: 0; background: var(--accent); color: var(--accent-text); }
+.library-plan-actions { display: flex; align-items: center; gap: .4rem; }
+.library-plan .library-remove-button { color: #d65050; }
+.library-remove-confirm { display: grid; grid-column: 1 / -1; gap: .4rem; padding: .8rem; border-radius: .8rem; background: color-mix(in srgb, #e75d5d 7%, var(--background)); }
+.library-remove-confirm > div { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: .35rem; }
+.library-remove-confirm .danger-button { min-height: 2.75rem; padding: 0 .8rem; }
 .library-status { color: var(--muted); font-size: .65rem; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
 .library-status-active { color: var(--accent-strong); }
 .library-status-completed { color: #438a59; }
 .ai-plan-guide { margin-top: .8rem; padding: 1rem; border-radius: 1rem; background: var(--background); }
 .ai-plan-guide p { margin-top: .35rem; color: var(--muted); font-size: .78rem; line-height: 1.5; }
 
-.exercise-library-link { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); color: var(--text); text-decoration: none; }
-.exercise-library-link span { display: grid; gap: .2rem; }.exercise-library-link small { color: var(--muted); font-size: .7rem; }.exercise-library-link b { color: var(--accent-strong); font-size: .75rem; }
+.exercise-library-link { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 1.5rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); color: var(--text); text-decoration: none; }
+.exercise-library-link span { display: grid; min-width: 0; gap: .2rem; }.exercise-library-link small { color: var(--muted); font-size: .7rem; line-height: 1.4; }.exercise-library-link b { flex: none; color: var(--accent-strong); font-size: .75rem; }
+
+@media (max-width: 390px) {
+  .library-plan { grid-template-columns: 1fr; }
+  .library-plan-actions { justify-content: stretch; }
+  .library-plan-actions button { flex: 1; }
+}
 .exercise-library-list { display: grid; gap: .65rem; }
 .exercise-library-list details { border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); overflow: hidden; }
 .exercise-library-list summary { display: flex; align-items: center; justify-content: space-between; min-height: 4rem; padding: .8rem 1rem; cursor: pointer; list-style: none; }
 .exercise-library-list summary div { display: grid; gap: .2rem; }.exercise-library-list summary small { color: var(--muted); font-size: .7rem; text-transform: capitalize; }.exercise-library-list summary > span { color: var(--accent-strong); font-size: 1.2rem; }
 .exercise-library-detail { display: grid; gap: .65rem; padding: 0 1rem 1rem; color: var(--muted); font-size: .76rem; line-height: 1.45; }.exercise-library-detail ul { margin: 0; padding-left: 1.2rem; }.media-placeholder { padding: .65rem; border-radius: .65rem; background: var(--background); }
+.exercise-media { display: grid; gap: .45rem; }
+.exercise-media button { min-height: 2.75rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--background); color: var(--accent-strong); font-weight: 800; }
+.exercise-media video { width: 100%; max-height: 22rem; border-radius: .8rem; background: #000; }
+.exercise-media p { color: #d65050; font-size: .7rem; }
+.exercise-media small { color: var(--muted); font-size: .65rem; }
 
 .muscle-row {
   display: grid;

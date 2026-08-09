@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(35);
+select plan(40);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -219,6 +219,20 @@ select lives_ok(
   'owner can resume a paused cycle'
 );
 select is((select count(*)::integer from public.program_cycles where status = 'active'), 1, 'resuming still leaves exactly one active cycle');
+
+select throws_ok(
+  $$select public.remove_program_cycle((select id from public.program_cycles where status = 'active'), false)$$,
+  'P0001',
+  'Confirmation is required to remove an active or in-progress plan',
+  'an active or in-progress plan cannot be removed without explicit confirmation'
+);
+select lives_ok(
+  $$select public.remove_program_cycle((select id from public.program_cycles where status = 'active'), true)$$,
+  'the owner can confirm removal of an active plan'
+);
+select is((select count(*)::integer from public.program_cycles where status = 'abandoned'), 1, 'removed plans are retained as abandoned records');
+select is(jsonb_array_length(public.get_program_library()), 1, 'removed plans disappear from the plan library');
+select ok((select count(*) from public.workout_sessions) > 0, 'removing a plan preserves its workout history');
 
 select * from finish();
 rollback;

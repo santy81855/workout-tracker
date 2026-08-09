@@ -5,6 +5,11 @@ import { BottomNavigation } from "@/components/bottom-navigation";
 import { PlanLibrary } from "@/components/plan-library";
 import Link from "next/link";
 
+function restLabel(seconds: number) {
+  if (seconds % 60 === 0) return `${seconds / 60} min rest`;
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} rest`;
+}
+
 export default function ProgramPage() {
   const { document: program, hasProgram, loading } = useActiveProgram();
   const exerciseNames = new Map(program.exercises.map((exercise) => [exercise.slug, exercise.name]));
@@ -80,7 +85,7 @@ export default function ProgramPage() {
                 {template.exercises.map((prescription) => (
                   <li key={prescription.exercise}>
                     <span>{exerciseNames.get(prescription.exercise)}</span>
-                    <small>{prescription.repMin}–{prescription.repMax} reps · peak {prescription.peakSets} · {(prescription.restSeconds ?? program.exercises.find((item) => item.slug === prescription.exercise)?.defaultRestSeconds ?? 0) / 60} min rest</small>
+                    <small>{prescription.repMin}–{prescription.repMax} reps · Up to {prescription.peakSets} working sets · {restLabel(prescription.restSeconds ?? program.exercises.find((item) => item.slug === prescription.exercise)?.defaultRestSeconds ?? 0)}</small>
                   </li>
                 ))}
               </ol>
