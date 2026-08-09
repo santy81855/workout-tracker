@@ -880,6 +880,7 @@ h2 {
 .itinerary-number { display: grid; flex: none; width: 1.8rem; height: 1.8rem; place-items: center; border-radius: 999px; background: var(--background); color: var(--muted); font-size: .68rem; font-weight: 850; }
 .itinerary-actions { display: flex !important; flex: none; margin-left: auto; }
 .itinerary-actions button { width: 2.5rem; height: 2.5rem; padding: 0; border: 1px solid var(--border); background: var(--background); color: var(--accent-strong); font-weight: 900; }
+.itinerary-actions .do-now-button { width: auto; padding: 0 .6rem; font-size: .65rem; white-space: nowrap; }
 .itinerary-actions button:first-child { border-radius: .7rem 0 0 .7rem; }
 .itinerary-actions button:last-child { margin-left: -1px; border-radius: 0 .7rem .7rem 0; }
 .itinerary-actions button:disabled { color: var(--muted); opacity: .4; }
@@ -909,10 +910,9 @@ h2 {
   line-height: 1.05;
 }
 
-.form-help-trigger { width: fit-content; min-height: 2.25rem; margin-top: .35rem; padding: 0 .65rem; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); border-radius: 999px; background: color-mix(in srgb, var(--accent) 7%, var(--background)); color: var(--accent-strong); font-size: .7rem; font-weight: 800; }
-.exercise-form-help { display: grid; gap: .65rem; margin-top: .85rem; padding: .85rem; border: 1px solid var(--border); border-radius: .85rem; background: var(--background); font-size: .75rem; }
-.exercise-form-help ul { margin: 0; padding-left: 1.15rem; color: var(--muted); line-height: 1.5; }
-.exercise-form-help > p { color: var(--muted); }
+.exercise-muscle-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: .8rem 0 .35rem; }
+.exercise-muscle-chips span { padding: .3rem .5rem; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, var(--background)); color: var(--accent-strong); font-size: .64rem; font-weight: 800; }
+.exercise-muscle-chips span.secondary { background: var(--background); color: var(--muted); }
 
 .more-button {
   flex: none;
