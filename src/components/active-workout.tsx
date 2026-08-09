@@ -152,6 +152,22 @@ export function ActiveWorkout() {
       setError("Enter a load before completing this set.");
       return;
     }
+    if (activeSet.loadTenthsLb !== null) {
+      const priorSets = history
+        .filter((item) => item.id !== session.id && item.status !== "active")
+        .flatMap((item) => item.exercises)
+        .filter((item) => item.performedExerciseSlug === exercise.performedExerciseSlug)
+        .flatMap((item) => item.sets)
+        .filter((set) => set.status === "completed" && set.loadMode === activeSet.loadMode && set.loadTenthsLb !== null);
+      if (priorSets.length === 0) setRecordCelebration("First personal best recorded");
+      else {
+        const loadRecord = activeSet.loadTenthsLb > Math.max(...priorSets.map((set) => set.loadTenthsLb ?? 0));
+        const volumeRecord = activeSet.loadTenthsLb * activeSet.reps > Math.max(...priorSets.map((set) => (set.loadTenthsLb ?? 0) * set.reps));
+        if (loadRecord && volumeRecord) setRecordCelebration("New weight and set-volume records");
+        else if (loadRecord) setRecordCelebration("New highest weight");
+        else if (volumeRecord) setRecordCelebration("New set-volume record");
+      }
+    }
     const restEndsAt = new Date(now + exercise.restSeconds * 1_000).toISOString();
     const exercises = [...session.exercises];
     const sets = [...exercise.sets];
@@ -161,22 +177,16 @@ export function ActiveWorkout() {
   }
 
   function confirmRir(onTarget: boolean, actualRir: WorkoutSetDraft["actualRir"] = null) {
-    if (activeSet?.loadTenthsLb !== null && activeSet?.loadTenthsLb !== undefined && exercise) {
-      const priorSets = history
-        .filter((item) => item.id !== session?.id && item.status !== "active")
-        .flatMap((item) => item.exercises)
-        .filter((item) => item.performedExerciseSlug === exercise.performedExerciseSlug)
-        .flatMap((item) => item.sets)
-        .filter((set) => set.status === "completed" && set.loadMode === activeSet.loadMode && set.loadTenthsLb !== null);
-      if (priorSets.length > 0) {
-        const loadRecord = activeSet.loadTenthsLb > Math.max(...priorSets.map((set) => set.loadTenthsLb ?? 0));
-        const volumeRecord = activeSet.loadTenthsLb * activeSet.reps > Math.max(...priorSets.map((set) => (set.loadTenthsLb ?? 0) * set.reps));
-        if (loadRecord && volumeRecord) setRecordCelebration("New weight and set-volume records");
-        else if (loadRecord) setRecordCelebration("New highest weight");
-        else if (volumeRecord) setRecordCelebration("New set-volume record");
-      }
-    }
     updateActiveSet((set) => ({ ...set, status: "completed", rirOnTarget: onTarget, actualRir }));
+  }
+
+  function moveUpcomingExercise(index: number, direction: -1 | 1) {
+    if (!session) return;
+    const target = index + direction;
+    if (index <= session.activeExerciseIndex || target <= session.activeExerciseIndex || target >= session.exercises.length) return;
+    const exercises = [...session.exercises];
+    [exercises[index], exercises[target]] = [exercises[target], exercises[index]];
+    void commit({ ...session, exercises });
   }
 
   function undoSet(setIndex: number) {
@@ -528,11 +538,16 @@ export function ActiveWorkout() {
         <div className="itinerary-heading"><p className="eyebrow">Workout itinerary</p><h2 id="up-next-title">Up next</h2></div>
         <ol>
           {session.exercises.slice(session.activeExerciseIndex + 1).map((upcoming, offset) => {
+            const absoluteIndex = session.activeExerciseIndex + offset + 1;
             const completed = upcoming.sets.filter((set) => set.status === "completed").length;
             return (
               <li key={upcoming.id}>
                 <span className="itinerary-number">{session.activeExerciseIndex + offset + 2}</span>
                 <div><strong>{upcoming.name}</strong><small>{upcoming.sets.length} sets · {upcoming.repMin}–{upcoming.repMax} reps{completed ? ` · ${completed} completed` : ""}</small></div>
+                <div className="itinerary-actions">
+                  <button aria-label={`Move ${upcoming.name} earlier`} disabled={offset === 0} onClick={() => moveUpcomingExercise(absoluteIndex, -1)} type="button">↑</button>
+                  <button aria-label={`Move ${upcoming.name} later`} disabled={absoluteIndex === session.exercises.length - 1} onClick={() => moveUpcomingExercise(absoluteIndex, 1)} type="button">↓</button>
+                </div>
               </li>
             );
           })}

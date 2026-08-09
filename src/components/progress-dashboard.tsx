@@ -14,16 +14,16 @@ function MuscleHeatMap({ values }: { values: Record<string, number> }) {
   return (
     <div className="muscle-heat-map" aria-label="Body map showing weekly muscle-group set exposure">
       <div><span>Front</span><svg viewBox="0 0 140 300" role="img" aria-label="Front muscle exposure">
-        <circle className="body-outline" cx="70" cy="24" r="17"/><path className="body-outline" d="M48 47 Q70 38 92 47 L106 132 92 176 89 285 70 285 65 181 51 285 32 285 48 176 34 132Z"/>
-        <path className="heat-area" style={area("chest")} d="M51 57 Q70 47 89 57 L86 91 Q70 101 54 91Z"><title>Chest: {values.chest ?? 0} of 15 sets</title></path>
-        <path className="heat-area" style={area("shoulders")} d="M35 54 Q44 45 54 50 L51 74 37 82 28 70Z M86 50 Q97 45 105 54 L112 70 102 82 89 74Z"><title>Shoulders: {values.shoulders ?? 0} of 15 sets</title></path>
-        <path className="heat-area" style={area("biceps")} d="M29 79 43 84 37 126 24 121Z M97 84 111 79 116 121 103 126Z"><title>Biceps: {values.biceps ?? 0} of 15 sets</title></path>
-        <path className="heat-area" style={area("abs")} d="M57 97 83 97 86 150 54 150Z"><title>Abs: {values.abs ?? 0} of 15 sets</title></path>
-        <path className="heat-area" style={area("quads")} d="M48 157 66 158 62 222 39 222Z M74 158 92 157 101 222 78 222Z"><title>Quads: {values.quads ?? 0} of 15 sets</title></path>
-        <path className="heat-area" style={area("calves")} d="M39 227 61 227 57 281 35 281Z M79 227 101 227 105 281 83 281Z"><title>Calves: {values.calves ?? 0} of 15 sets</title></path>
+        <circle className="body-outline" cx="70" cy="25" r="16"/><path className="body-outline" d="M52 46 C44 48 37 54 33 65 C28 81 25 104 22 128 C21 137 28 140 33 132 L43 88 C44 113 47 137 50 153 C44 176 39 207 37 239 L34 286 C34 295 46 296 49 287 L57 238 L66 181 L74 181 L83 238 L91 287 C94 296 106 295 106 286 L103 239 C101 207 96 176 90 153 C93 137 96 113 97 88 L107 132 C112 140 119 137 118 128 C115 104 112 81 107 65 C103 54 96 48 88 46 C79 43 61 43 52 46Z"/>
+        <path className="heat-area" style={area("chest")} d="M50 58 C57 51 66 51 69 58 L69 89 C61 94 53 91 48 84 C47 74 47 65 50 58Z M90 58 C83 51 74 51 71 58 L71 89 C79 94 87 91 92 84 C93 74 93 65 90 58Z"><title>Chest: {values.chest ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("shoulders")} d="M48 51 C39 52 34 59 33 70 C34 77 39 80 45 77 C48 70 50 60 48 51Z M92 51 C101 52 106 59 107 70 C106 77 101 80 95 77 C92 70 90 60 92 51Z"><title>Shoulders: {values.shoulders ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("biceps")} d="M34 79 C29 88 28 106 27 121 C29 127 34 128 39 123 L44 83 C41 79 38 78 34 79Z M106 79 C111 88 112 106 113 121 C111 127 106 128 101 123 L96 83 C99 79 102 78 106 79Z"><title>Biceps: {values.biceps ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("abs")} d="M56 96 C61 92 79 92 84 96 L86 142 C79 149 61 149 54 142Z"><title>Abs: {values.abs ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("quads")} d="M50 159 C55 154 64 155 67 161 L63 218 C58 227 46 225 42 218 C42 196 45 174 50 159Z M90 159 C85 154 76 155 73 161 L77 218 C82 227 94 225 98 218 C98 196 95 174 90 159Z"><title>Quads: {values.quads ?? 0} of 15 sets</title></path>
+        <path className="heat-area" style={area("calves")} d="M42 228 C48 223 58 225 61 232 L54 279 C51 289 40 289 38 280Z M98 228 C92 223 82 225 79 232 L86 279 C89 289 100 289 102 280Z"><title>Calves: {values.calves ?? 0} of 15 sets</title></path>
       </svg></div>
       <div><span>Back</span><svg viewBox="0 0 140 300" role="img" aria-label="Back muscle exposure">
-        <circle className="body-outline" cx="70" cy="24" r="17"/><path className="body-outline" d="M48 47 Q70 38 92 47 L106 132 92 176 89 285 70 285 65 181 51 285 32 285 48 176 34 132Z"/>
+        <circle className="body-outline" cx="70" cy="25" r="16"/><path className="body-outline" d="M52 46 C44 48 37 54 33 65 C28 81 25 104 22 128 C21 137 28 140 33 132 L43 88 C44 113 47 137 50 153 C44 176 39 207 37 239 L34 286 C34 295 46 296 49 287 L57 238 L66 181 L74 181 L83 238 L91 287 C94 296 106 295 106 286 L103 239 C101 207 96 176 90 153 C93 137 96 113 97 88 L107 132 C112 140 119 137 118 128 C115 104 112 81 107 65 C103 54 96 48 88 46 C79 43 61 43 52 46Z"/>
         <path className="heat-area" style={area("back")} d="M49 56 Q70 46 91 56 L87 117 70 139 53 117Z"><title>Back: {values.back ?? 0} of 15 sets</title></path>
         <path className="heat-area" style={area("triceps")} d="M29 76 43 82 38 126 24 119Z M97 82 111 76 116 119 102 126Z"><title>Triceps: {values.triceps ?? 0} of 15 sets</title></path>
         <path className="heat-area" style={area("glutes")} d="M50 140 Q70 129 90 140 L92 170 Q70 181 48 170Z"><title>Glutes: {values.glutes ?? 0} of 15 sets</title></path>
@@ -97,6 +97,7 @@ export function ProgressDashboard() {
 
   return (
     <>
+      <div className="progress-week-banner"><span>Current progress</span><strong>Week {currentWeek} of {program.weekCount}</strong></div>
       <section className="record-grid" aria-label="Exercise records">
         <div><span>Highest load</span><strong>{highest ? `${(highest.set.loadTenthsLb ?? 0) / 10} lb` : "—"}</strong><small>{highest?.exercise.name ?? "Complete a workout"}</small></div>
         <div><span>Best set volume</span><strong>{bestVolume ? (((bestVolume.set.loadTenthsLb ?? 0) * bestVolume.set.reps) / 10).toLocaleString() : "—"}</strong><small>{bestVolume?.exercise.name ?? "Complete a workout"}</small></div>

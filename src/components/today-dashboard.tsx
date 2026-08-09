@@ -105,7 +105,7 @@ export function TodayDashboard() {
             ? "All 60 sessions are resolved. Start a new cycle from Settings when its plan is ready."
             : displayedWeek === 1
               ? "Week 1 starts with one working set per exercise."
-              : `The ordered queue has advanced to Week ${displayedWeek}.`}
+              : `You’re now training in Week ${displayedWeek}.`}
       </p>
       {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
     </section>
@@ -121,7 +121,7 @@ export function TodayDashboard() {
       <div className="progress-track" aria-label={`${resolvedCount} of sixty workouts resolved`}>
         <span style={{ width: `${Math.min(100, (resolvedCount / 60) * 100)}%` }} />
       </div>
-      <p className="muted-copy">Completed and intentionally shortened sessions advance the ordered workout queue.</p>
+      <p className="muted-copy">Finishing or intentionally shortening a workout moves you to the next session.</p>
     </section>
     </>
   );
