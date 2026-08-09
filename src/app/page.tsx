@@ -1,5 +1,6 @@
 import { TodayDashboard } from "@/components/today-dashboard";
 import Link from "next/link";
+import { BottomNavigation } from "@/components/bottom-navigation";
 
 export default function TodayPage() {
   return (
@@ -16,12 +17,7 @@ export default function TodayPage() {
 
       <TodayDashboard />
 
-      <nav className="bottom-nav" aria-label="Primary navigation">
-        <Link aria-current="page" href="/">Today</Link>
-        <Link href="/program">Program</Link>
-        <Link href="/history">History</Link>
-        <Link href="/progress">Progress</Link>
-      </nav>
+      <BottomNavigation />
     </main>
   );
 }

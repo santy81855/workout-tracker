@@ -25,6 +25,7 @@ function conflictRevision(message: string): number | null {
 export async function syncWorkoutSession(session: ActiveWorkoutSession): Promise<SyncResult> {
   const supabase = createSupabaseBrowserClient();
   const activeProgram = await getActiveProgramRecord();
+  if (!activeProgram) throw new Error("Select a workout plan before syncing a session.");
 
   const { error: bootstrapError } = await supabase.rpc("bootstrap_program_cycle", {
     p_document: activeProgram.document,

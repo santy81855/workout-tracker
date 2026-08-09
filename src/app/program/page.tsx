@@ -1,10 +1,11 @@
 "use client";
 
 import { useActiveProgram } from "@/lib/program/use-active-program";
-import Link from "next/link";
+import { BottomNavigation } from "@/components/bottom-navigation";
+import { PlanLibrary } from "@/components/plan-library";
 
 export default function ProgramPage() {
-  const { document: program } = useActiveProgram();
+  const { document: program, hasProgram, loading } = useActiveProgram();
   const exerciseNames = new Map(program.exercises.map((exercise) => [exercise.slug, exercise.name]));
 
   return (
@@ -15,6 +16,10 @@ export default function ProgramPage() {
           <h1>Program</h1>
         </div>
       </header>
+
+      <PlanLibrary showStarter={!loading && !hasProgram} />
+
+      {!hasProgram ? null : <>
 
       <section className="hero-card program-intro">
         <p className="eyebrow">Active plan</p>
@@ -83,12 +88,8 @@ export default function ProgramPage() {
         </div>
       </section>
 
-      <nav className="bottom-nav" aria-label="Primary navigation">
-        <Link href="/">Today</Link>
-        <Link aria-current="page" href="/program">Program</Link>
-        <Link href="/history">History</Link>
-        <Link href="/progress">Progress</Link>
-      </nav>
+      </>}
+      <BottomNavigation />
     </main>
   );
 }

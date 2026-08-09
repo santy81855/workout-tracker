@@ -13,12 +13,6 @@ interface ProgramConfigDatabase extends DBSchema {
 }
 
 export const defaultProgram = programDocumentSchema.parse(defaultProgramJson);
-const defaultRecord: ActiveProgramRecord = {
-  document: defaultProgram,
-  startsOn: "2026-08-10",
-  activatedAt: "2026-08-08T00:00:00.000Z",
-};
-
 let databasePromise: ReturnType<typeof openDB<ProgramConfigDatabase>> | null = null;
 
 function database() {
@@ -28,8 +22,8 @@ function database() {
   return databasePromise;
 }
 
-export async function getActiveProgramRecord(): Promise<ActiveProgramRecord> {
-  return (await (await database()).get("config", "active")) ?? defaultRecord;
+export async function getActiveProgramRecord(): Promise<ActiveProgramRecord | null> {
+  return (await (await database()).get("config", "active")) ?? null;
 }
 
 export async function saveActiveProgramRecord(record: ActiveProgramRecord) {
@@ -40,3 +34,5 @@ export async function saveActiveProgramRecord(record: ActiveProgramRecord) {
   };
   await (await database()).put("config", validated, "active");
 }
+
+export async function clearActiveProgramRecord() { await (await database()).delete("config", "active"); }

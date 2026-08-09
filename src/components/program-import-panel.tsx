@@ -68,14 +68,14 @@ export function ProgramImportPanel() {
   return (
     <section className="settings-section program-import-panel">
       <p className="eyebrow">Future cycle</p><h2>Import program JSON</h2>
-      <p className="muted-copy">Activation archives the current cycle but preserves its workout history. Use the example JSON export as the authoring contract.</p>
+      <p className="muted-copy">Activation pauses the current cycle and preserves its progress so you can resume it later. Use the example JSON export as the authoring contract.</p>
       <label className="file-picker">Choose JSON file<input accept="application/json,.json" onChange={(event) => void readFile(event.target.files?.[0])} type="file" /></label>
       {document ? (
         <div className="program-import-preview">
           <strong>{document.name}</strong><span>{document.weekCount} weeks · {document.workoutsPerWeek * document.weekCount} workouts · {document.exercises.length} exercises</span>
           <ol>{document.workoutTemplates.map((template) => <li key={template.sequence}>{template.name} <small>{template.exercises.length} exercises</small></li>)}</ol>
           <label>Cycle starts<input min={upcomingMonday()} onChange={(event) => setStartsOn(event.target.value)} type="date" value={startsOn} /></label>
-          <button className="primary-button" disabled={activating} onClick={activate} type="button">{activating ? "Activating…" : "Archive Current Cycle and Activate"}</button>
+          <button className="primary-button" disabled={activating} onClick={activate} type="button">{activating ? "Activating…" : "Pause Current Plan and Activate"}</button>
         </div>
       ) : null}
       {message ? <p className="form-message" role="status">{message}</p> : null}

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BottomNavigation } from "@/components/bottom-navigation";
 
 interface ScreenPlaceholderProps {
   eyebrow: string;
@@ -19,12 +19,7 @@ export function ScreenPlaceholder({ eyebrow, title, description }: ScreenPlaceho
         <h2>Foundation ready</h2>
         <p className="muted-copy placeholder-copy">{description}</p>
       </section>
-      <nav className="bottom-nav" aria-label="Primary navigation">
-        <Link href="/">Today</Link>
-        <Link aria-current={title === "Program" ? "page" : undefined} href="/program">Program</Link>
-        <Link aria-current={title === "History" ? "page" : undefined} href="/history">History</Link>
-        <Link aria-current={title === "Progress" ? "page" : undefined} href="/progress">Progress</Link>
-      </nav>
+      <BottomNavigation />
     </main>
   );
 }

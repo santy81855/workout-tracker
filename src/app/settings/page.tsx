@@ -6,6 +6,7 @@ import { AppearancePreferences } from "@/components/appearance-preferences";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { BottomNavigation } from "@/components/bottom-navigation";
 
 export default async function SettingsPage() {
   let email = "Local demo";
@@ -36,6 +37,7 @@ export default async function SettingsPage() {
         <p className="muted-copy">This removes your login and offline workout copies from this phone or computer. Workouts already synced to your account remain safe and return after you sign in again.</p>
         <LogoutButton />
       </section>
+      <BottomNavigation />
     </main>
   );
 }
