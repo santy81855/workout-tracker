@@ -90,6 +90,8 @@ export const programDocumentSchema = z
     schemaVersion: z.literal("1.0"),
     slug: slugSchema,
     name: z.string().trim().min(1).max(120),
+    displayTitle: z.string().trim().min(1).max(80).optional(),
+    splitType: z.string().trim().min(1).max(80).optional(),
     description: z.string().trim().min(1).max(1000),
     weekCount: z.literal(12),
     workoutsPerWeek: z.literal(5),

@@ -6,7 +6,7 @@ export default function TodayPage() {
     <main className="app-shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Upcoming cycle</p>
+          <p className="eyebrow">Your next workout</p>
           <h1>Today</h1>
         </div>
         <Link className="icon-button" href="/settings" aria-label="Open settings">

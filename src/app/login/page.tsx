@@ -1,6 +1,6 @@
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import Link from "next/link";
-import { LoginForm } from "./login-form";
+import { LoginForm, SignupForm } from "./login-form";
 
 export default function LoginPage() {
   const isConfigured = Boolean(getSupabasePublicConfig());
@@ -18,6 +18,11 @@ export default function LoginPage() {
           </div>
         ) : null}
         <LoginForm />
+        <details className="signup-panel">
+          <summary>Create a new account</summary>
+          <p className="muted-copy">Your workouts and settings will be private to your account.</p>
+          <SignupForm />
+        </details>
         {!isConfigured ? <Link className="text-link" href="/">Return to the local preview</Link> : null}
       </section>
     </main>

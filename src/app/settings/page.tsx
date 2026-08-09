@@ -28,14 +28,14 @@ export default async function SettingsPage() {
         <div><span>Theme</span><strong>System · dark bias</strong></div>
         <ActiveProgramSetting />
       </section>
-      <section className="settings-section">
-        <p className="eyebrow">Device data</p>
-        <p className="muted-copy">Signing out clears the workout cache and pending synchronization queue from this browser. Synced database records remain intact.</p>
-        <LogoutButton />
-      </section>
       <AppearancePreferences />
       <DataExportPanel />
       <ProgramImportPanel />
+      <section className="settings-section signout-section">
+        <p className="eyebrow">Account</p><h2>Sign out of this device</h2>
+        <p className="muted-copy">This removes your login and offline workout copies from this phone or computer. Workouts already synced to your account remain safe and return after you sign in again.</p>
+        <LogoutButton />
+      </section>
     </main>
   );
 }

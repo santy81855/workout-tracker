@@ -31,7 +31,7 @@ export function LogoutButton() {
   return (
     <div>
       <button className="danger-button" disabled={pending} onClick={signOut} type="button">
-        {pending ? "Signing out…" : "Sign out and clear this device"}
+        {pending ? "Signing out…" : "Sign out on this device"}
       </button>
       {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
     </div>

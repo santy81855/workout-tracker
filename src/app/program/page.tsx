@@ -18,13 +18,15 @@ export default function ProgramPage() {
 
       <section className="hero-card program-intro">
         <p className="eyebrow">Active plan</p>
-        <h2>{program.name}</h2>
+        <h2>{program.displayTitle ?? program.name}</h2>
+        {program.displayTitle ? <p className="program-formal-name">{program.name}</p> : null}
         <p className="muted-copy">{program.description}</p>
         <div className="program-summary" aria-label="Program summary">
           <span><strong>{program.weekCount}</strong> weeks</span>
           <span><strong>{program.workoutsPerWeek}</strong> workouts per week</span>
           <span><strong>60</strong> total sessions</span>
         </div>
+        {program.splitType ? <span className="split-type-pill">{program.splitType}</span> : null}
       </section>
 
       <section className="program-section" aria-labelledby="week-progression-title">
