@@ -5,7 +5,6 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { workoutRepository } from "@/lib/workout/indexeddb-repository";
 import { getRemoteSession, listAvailableSessions } from "@/lib/workout/history";
 import { findPreviousExercise, formatPreviousSets } from "@/lib/workout/previous-performance";
-import { getExerciseGuidance } from "@/lib/program/exercise-guidance";
 import { flushWorkoutOutbox, syncWorkoutSession, WorkoutSyncConflictError } from "@/lib/workout/sync";
 import type { ActiveWorkoutSession, WorkoutSetDraft } from "@/lib/workout/types";
 import { useRouter } from "next/navigation";
@@ -25,6 +24,10 @@ function timerLabel(remainingSeconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+function muscleLabel(slug: string) {
+  return slug.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+}
+
 export function ActiveWorkout() {
   const router = useRouter();
   const { document: program } = useActiveProgram();
@@ -40,7 +43,6 @@ export function ActiveWorkout() {
   const [recordCelebration, setRecordCelebration] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
-  const [formHelpExerciseId, setFormHelpExerciseId] = useState<string | null>(null);
   const syncTimer = useRef<number | null>(null);
   const cancelPanel = useRef<HTMLElement | null>(null);
 
@@ -196,6 +198,15 @@ export function ActiveWorkout() {
     void commit({ ...session, exercises });
   }
 
+  function makeExerciseCurrent(index: number) {
+    if (!session || index <= session.activeExerciseIndex || index >= session.exercises.length) return;
+    const exercises = [...session.exercises];
+    [exercises[session.activeExerciseIndex], exercises[index]] = [exercises[index], exercises[session.activeExerciseIndex]];
+    setShowReplacements(false);
+    void commit({ ...session, exercises });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function undoSet(setIndex: number) {
     if (!session || !exercise) return;
     const exercises = [...session.exercises];
@@ -317,9 +328,7 @@ export function ActiveWorkout() {
   const exerciseComplete = exercise.sets.every((set) => set.status === "completed" || set.status === "skipped");
   const isLastExercise = session.activeExerciseIndex === session.exercises.length - 1;
   const performedDefinition = program.exercises.find((candidate) => candidate.slug === exercise.performedExerciseSlug);
-  const formGuidance = getExerciseGuidance(performedDefinition);
   const editingNote = editingNoteId === exercise.id;
-  const showingFormHelp = formHelpExerciseId === exercise.id;
   const primaryMuscles = new Set(performedDefinition?.muscles.filter((muscle) => muscle.contribution === 1).map((muscle) => muscle.muscle));
   const replacementOptions = program.exercises
     .filter((candidate) => candidate.slug !== exercise.performedExerciseSlug)
@@ -389,8 +398,8 @@ export function ActiveWorkout() {
           <div>
             <p className="eyebrow">{session.phase} · Target {exercise.targetRirLabel} RIR</p>
             <h1>{exercise.name}</h1>
-            <button className="form-help-trigger" aria-expanded={showingFormHelp} onClick={() => setFormHelpExerciseId(showingFormHelp ? null : exercise.id)} type="button">{showingFormHelp ? "Hide form help" : "Form help"}</button>
             <p className="muted-copy">{exercise.repMin}–{exercise.repMax} reps · {exercise.sets.length} working {exercise.sets.length === 1 ? "set" : "sets"}</p>
+            <div className="exercise-muscle-chips" aria-label="Muscles trained">{performedDefinition?.muscles.map((muscle) => <span className={muscle.contribution === .5 ? "secondary" : ""} key={muscle.muscle}>{muscleLabel(muscle.muscle)}{muscle.contribution === .5 ? " · secondary" : ""}</span>)}</div>
           </div>
           <button
             className="replace-button"
@@ -401,8 +410,6 @@ export function ActiveWorkout() {
             Replace
           </button>
         </div>
-
-        {showingFormHelp ? <div className="exercise-form-help"><strong>Form reminders</strong>{formGuidance.length > 0 ? <ul>{formGuidance.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No form reminders have been added for this exercise.</p>}</div> : null}
 
         {showReplacements ? (
           <div className="replacement-panel">
@@ -567,6 +574,7 @@ export function ActiveWorkout() {
                 <span className="itinerary-number">{session.activeExerciseIndex + offset + 2}</span>
                 <div><strong>{upcoming.name}</strong><small>{upcoming.sets.length} sets · {upcoming.repMin}–{upcoming.repMax} reps{completed ? ` · ${completed} completed` : ""}</small></div>
                 <div className="itinerary-actions">
+                  <button className="do-now-button" aria-label={`Make ${upcoming.name} the current exercise`} onClick={() => makeExerciseCurrent(absoluteIndex)} type="button">Do now</button>
                   <button aria-label={`Move ${upcoming.name} earlier`} disabled={offset === 0} onClick={() => moveUpcomingExercise(absoluteIndex, -1)} type="button">↑</button>
                   <button aria-label={`Move ${upcoming.name} later`} disabled={absoluteIndex === session.exercises.length - 1} onClick={() => moveUpcomingExercise(absoluteIndex, 1)} type="button">↓</button>
                 </div>
