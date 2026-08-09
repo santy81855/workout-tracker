@@ -40,6 +40,7 @@ export function ActiveWorkout() {
   const [recordCelebration, setRecordCelebration] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [formHelpExerciseId, setFormHelpExerciseId] = useState<string | null>(null);
   const syncTimer = useRef<number | null>(null);
   const cancelPanel = useRef<HTMLElement | null>(null);
 
@@ -318,6 +319,7 @@ export function ActiveWorkout() {
   const performedDefinition = program.exercises.find((candidate) => candidate.slug === exercise.performedExerciseSlug);
   const formGuidance = getExerciseGuidance(performedDefinition);
   const editingNote = editingNoteId === exercise.id;
+  const showingFormHelp = formHelpExerciseId === exercise.id;
   const primaryMuscles = new Set(performedDefinition?.muscles.filter((muscle) => muscle.contribution === 1).map((muscle) => muscle.muscle));
   const replacementOptions = program.exercises
     .filter((candidate) => candidate.slug !== exercise.performedExerciseSlug)
@@ -387,6 +389,7 @@ export function ActiveWorkout() {
           <div>
             <p className="eyebrow">{session.phase} · Target {exercise.targetRirLabel} RIR</p>
             <h1>{exercise.name}</h1>
+            <button className="form-help-trigger" aria-expanded={showingFormHelp} onClick={() => setFormHelpExerciseId(showingFormHelp ? null : exercise.id)} type="button">{showingFormHelp ? "Hide form help" : "Form help"}</button>
             <p className="muted-copy">{exercise.repMin}–{exercise.repMax} reps · {exercise.sets.length} working {exercise.sets.length === 1 ? "set" : "sets"}</p>
           </div>
           <button
@@ -398,6 +401,8 @@ export function ActiveWorkout() {
             Replace
           </button>
         </div>
+
+        {showingFormHelp ? <div className="exercise-form-help"><strong>Form reminders</strong>{formGuidance.length > 0 ? <ul>{formGuidance.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No form reminders have been added for this exercise.</p>}</div> : null}
 
         {showReplacements ? (
           <div className="replacement-panel">
@@ -541,11 +546,10 @@ export function ActiveWorkout() {
           </div>
         ) : null}
 
-        {formGuidance.length > 0 ? <div className="exercise-guidance"><strong>Form reminders</strong><ul>{formGuidance.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
         <div className="active-exercise-notes">
           <div className="exercise-notes-heading"><strong>Exercise note</strong>{!editingNote ? <button onClick={() => { setNoteDraft(exercise.notes); setEditingNoteId(exercise.id); }} type="button">{exercise.notes ? "Edit note" : "+ Add note"}</button> : null}</div>
           {exercise.notes && !editingNote ? <p className="exercise-note-display">{exercise.notes}</p> : null}
-          {editingNote ? <div className="exercise-note-editor"><label><span className="sr-only">Note for {exercise.name}</span><textarea autoFocus onChange={(event) => setNoteDraft(event.target.value)} placeholder="Setup cue, seat position, technique reminder…" value={noteDraft} /></label><div className="exercise-note-actions"><button onClick={() => { setNoteDraft(exercise.notes); setEditingNoteId(null); }} type="button">Cancel</button><button className="primary-button" onClick={() => { const exercises = [...session.exercises]; exercises[session.activeExerciseIndex] = { ...exercise, notes: noteDraft.trim() }; void commit({ ...session, exercises }); setEditingNoteId(null); }} type="button">Save note</button></div></div> : null}
+          {editingNote ? <div className="exercise-note-editor"><label><span className="sr-only">Note for {exercise.name}</span><textarea autoFocus onFocus={(event) => event.currentTarget.setSelectionRange(event.currentTarget.value.length, event.currentTarget.value.length)} onChange={(event) => setNoteDraft(event.target.value)} placeholder="Setup cue, seat position, technique reminder…" value={noteDraft} /></label><div className="exercise-note-actions"><button onClick={() => { setNoteDraft(exercise.notes); setEditingNoteId(null); }} type="button">Cancel</button><button className="primary-button" onClick={() => { const exercises = [...session.exercises]; exercises[session.activeExerciseIndex] = { ...exercise, notes: noteDraft.trim() }; void commit({ ...session, exercises }); setEditingNoteId(null); }} type="button">Save note</button></div></div> : null}
         </div>
 
         {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
