@@ -739,6 +739,47 @@ h2 {
   font-weight: 800;
 }
 
+.cancel-workout-panel {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  padding: 0.9rem;
+  border: 1px solid #c33;
+  border-radius: 1rem;
+  background: color-mix(in srgb, #c33 9%, var(--surface));
+}
+
+.cancel-workout-panel p {
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.cancel-workout-panel button {
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 800;
+}
+
+.cancel-workout-panel .danger-button {
+  border-color: #c33;
+  color: #c33;
+}
+
+.cancel-workout-trigger {
+  width: 100%;
+  min-height: 2.75rem;
+  margin-top: 1.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-decoration: underline;
+}
+
 .timer-bar {
   display: flex;
   align-items: center;
