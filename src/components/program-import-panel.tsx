@@ -20,6 +20,7 @@ export function ProgramImportPanel() {
   const [startsOn, setStartsOn] = useState(upcomingMonday);
   const [message, setMessage] = useState<string | null>(null);
   const [activating, setActivating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   async function readFile(file: File | undefined) {
     setDocument(null); setMessage(null);
@@ -59,6 +60,19 @@ export function ProgramImportPanel() {
     }
   }
 
+  async function saveForLater() {
+    if (!document) return;
+    setSaving(true); setMessage(null);
+    try {
+      const { error } = await createSupabaseBrowserClient().rpc("save_program_to_library", { p_document: document, p_starts_on: startsOn });
+      if (error) throw new Error(error.message);
+      setMessage("Plan added to your library. Your current plan is still active.");
+      setDocument(null);
+      router.refresh();
+    } catch (error) { setMessage(error instanceof Error ? error.message : "The plan could not be saved."); }
+    finally { setSaving(false); }
+  }
+
   return (
     <section className="settings-section program-import-panel">
       <p className="eyebrow">Future cycle</p><h2>Import program JSON</h2>
@@ -69,7 +83,8 @@ export function ProgramImportPanel() {
           <strong>{document.name}</strong><span>{document.weekCount} weeks · {document.workoutsPerWeek * document.weekCount} workouts · {document.exercises.length} exercises</span>
           <ol>{document.workoutTemplates.map((template) => <li key={template.sequence}>{template.name} <small>{template.exercises.length} exercises</small></li>)}</ol>
           <label>Cycle starts<input min={upcomingMonday()} onChange={(event) => setStartsOn(event.target.value)} type="date" value={startsOn} /></label>
-          <button className="primary-button" disabled={activating} onClick={activate} type="button">{activating ? "Activating…" : "Pause Current Plan and Activate"}</button>
+          <button className="primary-button" disabled={activating || saving} onClick={activate} type="button">{activating ? "Activating…" : "Pause Current Plan and Activate"}</button>
+          <button className="secondary-button" disabled={activating || saving} onClick={saveForLater} type="button">{saving ? "Adding…" : "Add to Library for Later"}</button>
         </div>
       ) : null}
       {message ? <p className="form-message" role="status">{message}</p> : null}

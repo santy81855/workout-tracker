@@ -535,6 +535,12 @@ export function ActiveWorkout() {
           </div>
         ) : null}
 
+        {(performedDefinition?.guidance.length ?? 0) > 0 ? <div className="exercise-guidance"><strong>Form reminders</strong><ul>{performedDefinition?.guidance.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
+        <details className="active-exercise-notes" open={Boolean(exercise.notes)}>
+          <summary>Exercise notes <span>Experimental</span></summary>
+          <label><span className="sr-only">Notes for {exercise.name}</span><textarea onChange={(event) => { const exercises = [...session.exercises]; exercises[session.activeExerciseIndex] = { ...exercise, notes: event.target.value }; void commit({ ...session, exercises }); }} placeholder="Setup cue, seat position, technique reminder…" value={exercise.notes} /></label>
+        </details>
+
         {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
         {!confirmCancel ? <button className="cancel-workout-trigger" onClick={() => { setConfirmCancel(true); window.requestAnimationFrame(() => { window.scrollTo({ top: 0, behavior: "smooth" }); cancelPanel.current?.focus(); }); }} type="button">Cancel Workout</button> : null}
       </section>

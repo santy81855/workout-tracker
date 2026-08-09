@@ -3,6 +3,7 @@
 import { useActiveProgram } from "@/lib/program/use-active-program";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { PlanLibrary } from "@/components/plan-library";
+import Link from "next/link";
 
 export default function ProgramPage() {
   const { document: program, hasProgram, loading } = useActiveProgram();
@@ -58,8 +59,6 @@ export default function ProgramPage() {
         <p className="legend-copy">Set counts are shown for exercises that peak at 4 / 3 / 2 sets.</p>
       </section>
 
-      <PlanLibrary />
-
       <section className="program-section" aria-labelledby="training-days-title">
         <div className="section-heading">
           <div>
@@ -81,7 +80,7 @@ export default function ProgramPage() {
                 {template.exercises.map((prescription) => (
                   <li key={prescription.exercise}>
                     <span>{exerciseNames.get(prescription.exercise)}</span>
-                    <small>{prescription.repMin}–{prescription.repMax} reps · peak {prescription.peakSets}</small>
+                    <small>{prescription.repMin}–{prescription.repMax} reps · peak {prescription.peakSets} · {(prescription.restSeconds ?? program.exercises.find((item) => item.slug === prescription.exercise)?.defaultRestSeconds ?? 0) / 60} min rest</small>
                   </li>
                 ))}
               </ol>
@@ -89,6 +88,10 @@ export default function ProgramPage() {
           ))}
         </div>
       </section>
+
+      <Link className="exercise-library-link" href="/exercises"><span><strong>Exercise library</strong><small>Equipment, muscles, rest times, and form reminders</small></span><b>Browse →</b></Link>
+
+      <PlanLibrary />
 
       </>}
       <BottomNavigation />
