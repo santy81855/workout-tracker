@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(28);
+select plan(31);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -194,6 +194,17 @@ select lives_ok(
 );
 select is(jsonb_array_length(public.get_weekly_checkins()), 1, 'owner can read their weekly check-in projection');
 select is((public.get_weekly_checkins()->0->>'programWeek')::integer, 1, 'weekly check-in preserves its program week');
+
+update public.workout_sessions set status = 'active', finished_at = null
+where id = '50000000-0000-4000-8000-000000000001';
+update public.scheduled_workouts set status = 'active'
+where id = (select scheduled_workout_id from public.workout_sessions where id = '50000000-0000-4000-8000-000000000001');
+select lives_ok(
+  $$select public.abandon_workout_session('50000000-0000-4000-8000-000000000001')$$,
+  'owner can abandon an accidental active workout'
+);
+select is((select status::text from public.workout_sessions where id = '50000000-0000-4000-8000-000000000001'), 'abandoned', 'abandoned workout is excluded from active state');
+select is((select scheduled.status::text from public.scheduled_workouts scheduled join public.workout_sessions sessions on sessions.scheduled_workout_id = scheduled.id where sessions.id = '50000000-0000-4000-8000-000000000001'), 'queued', 'abandoning returns the workout to the queue');
 
 select lives_ok(
   $$select public.activate_program_cycle((select source_json from public.program_revisions order by created_at limit 1), '2026-11-02')$$,

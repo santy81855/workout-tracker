@@ -1,6 +1,7 @@
 "use client";
 
 import { useActiveProgram } from "@/lib/program/use-active-program";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { workoutRepository } from "@/lib/workout/indexeddb-repository";
 import { getRemoteSession, listAvailableSessions } from "@/lib/workout/history";
 import { findPreviousExercise, formatPreviousSets } from "@/lib/workout/previous-performance";
@@ -31,6 +32,8 @@ export function ActiveWorkout() {
   const [now, setNow] = useState(() => Date.now());
   const [showReplacements, setShowReplacements] = useState(false);
   const [showFinishPanel, setShowFinishPanel] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [history, setHistory] = useState<ActiveWorkoutSession[]>([]);
   const syncTimer = useRef<number | null>(null);
 
@@ -245,6 +248,23 @@ export function ActiveWorkout() {
     }
   }
 
+  async function cancelWorkout() {
+    if (!session) return;
+    setCancelling(true);
+    setError(null);
+    try {
+      const { data, error: abandonError } = await createSupabaseBrowserClient().rpc("abandon_workout_session", {
+        p_session_id: session.id,
+      });
+      if (abandonError || data !== true) throw new Error(abandonError?.message ?? "Workout could not be abandoned");
+      await workoutRepository.clearActiveSession();
+      router.replace("/");
+    } catch {
+      setError("The workout could not be cancelled safely. Check your connection and try again.");
+      setCancelling(false);
+    }
+  }
+
   if (!session) {
     return (
       <main className="workout-shell loading-workout">
@@ -302,6 +322,14 @@ export function ActiveWorkout() {
           <div><strong>This workout changed on another device</strong><p>Choose which complete version to keep. Nothing will be discarded until you decide.</p></div>
           <button onClick={useServerVersion} type="button">Use Server Version</button>
           <button onClick={keepDeviceVersion} type="button">Keep This Device</button>
+        </section>
+      ) : null}
+
+      {confirmCancel ? (
+        <section className="cancel-workout-panel" role="alertdialog" aria-labelledby="cancel-workout-title" aria-describedby="cancel-workout-description">
+          <div><strong id="cancel-workout-title">Cancel this workout?</strong><p id="cancel-workout-description">Its entries will be discarded and this workout will return to the front of your program queue.</p></div>
+          <button className="danger-button" disabled={cancelling} onClick={cancelWorkout} type="button">{cancelling ? "Cancelling…" : "Discard Accidental Workout"}</button>
+          <button disabled={cancelling} onClick={() => setConfirmCancel(false)} type="button">Keep Workout</button>
         </section>
       ) : null}
 
@@ -465,6 +493,7 @@ export function ActiveWorkout() {
         ) : null}
 
         {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
+        {!confirmCancel ? <button className="cancel-workout-trigger" onClick={() => setConfirmCancel(true)} type="button">Cancel Workout</button> : null}
       </section>
     </main>
   );
