@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(41);
+select plan(48);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -51,6 +51,11 @@ select is(
   1,
   'user A can read their custom exercise'
 );
+select lives_ok(
+  $$select public.create_custom_exercise('Custom Cable Raise', 'Cable', 'external_total', 25, 90, 'shoulders')$$,
+  'owner can create a private custom exercise'
+);
+select ok((select public.get_exercise_library()) @> '[{"name":"Custom Cable Raise","isCustom":true}]'::jsonb, 'custom exercise appears in the owner library');
 
 select throws_ok(
   $$insert into public.programs (user_id, name) values ('20000000-0000-4000-8000-000000000002', 'Cross-owner insert')$$,
@@ -188,6 +193,10 @@ where id = '50000000-0000-4000-8000-000000000001';
 select is((select count(*)::integer from public.edit_audit_events where action = 'correct_session_details'), 1, 'completed-session detail correction creates one audit event');
 select is((select before_values->>'energyRating' from public.edit_audit_events where action = 'correct_session_details'), null, 'session audit preserves an unset prior energy rating');
 
+select lives_ok($$select public.correct_workout_performed_date('50000000-0000-4000-8000-000000000001', '2026-08-09')$$, 'owner can correct a completed workout date');
+select is((select performed_local_date::text from public.workout_sessions where id = '50000000-0000-4000-8000-000000000001'), '2026-08-09', 'corrected workout date is persisted');
+select is((select count(*)::integer from public.edit_audit_events where action = 'correct_session_date'), 1, 'workout date correction is audited');
+
 select lives_ok(
   $$select public.upsert_weekly_checkin('{"programWeek":1,"overallRecovery":4,"energy":4,"overallSoreness":2,"jointDiscomfort":"none","motivation":5,"nextWeekActions":["maintain_load"]}'::jsonb)$$,
   'owner can save a weekly check-in'
@@ -237,6 +246,11 @@ select ok((select count(*) from public.workout_sessions) > 0, 'removing a plan p
 select lives_ok(
   $$select public.activate_program_cycle((select source_json from public.program_revisions order by created_at limit 1), '2026-11-04')$$,
   'a program cycle can start on a non-Monday date'
+);
+select ok(jsonb_array_length(public.get_upcoming_workout_queue(5)) > 1, 'owner can read the upcoming workout queue');
+select lives_ok(
+  $$select public.swap_upcoming_workouts((public.get_upcoming_workout_queue(5)->0->>'scheduledWorkoutId')::uuid, (public.get_upcoming_workout_queue(5)->1->>'scheduledWorkoutId')::uuid)$$,
+  'owner can swap two upcoming workouts'
 );
 
 select * from finish();

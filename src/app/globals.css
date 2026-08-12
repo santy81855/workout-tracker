@@ -806,12 +806,11 @@ h2 {
   margin-top: 1.25rem;
   border: 0;
   background: transparent;
-  color: var(--muted);
+  color: #d84b4b;
   font-size: 0.78rem;
   text-decoration: underline;
 }
 
-.skip-exercise-trigger { width: 100%; min-height: 2.75rem; margin-top: .85rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--background); color: var(--muted); font-size: .75rem; font-weight: 800; }
 .skip-exercise-panel { display: grid; gap: .65rem; margin-top: .85rem; padding: .9rem; border: 1px solid color-mix(in srgb, #d9822b 55%, var(--border)); border-radius: .9rem; background: color-mix(in srgb, #d9822b 7%, var(--background)); }
 .skip-exercise-panel p { color: var(--muted); font-size: .75rem; line-height: 1.45; }
 .skip-exercise-panel label { display: grid; grid-template-columns: 1fr auto; gap: .35rem; color: var(--text); font-size: .72rem; font-weight: 800; }
@@ -888,6 +887,19 @@ h2 {
 .workout-itinerary li > div { display: grid; min-width: 0; gap: .15rem; }
 .workout-itinerary li strong { overflow: hidden; font-size: .85rem; text-overflow: ellipsis; white-space: nowrap; }
 .workout-itinerary li small { color: var(--muted); font-size: .7rem; }
+.add-session-exercise-trigger { width: 100%; min-height: 2.75rem; margin-top: .75rem; border: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: .8rem; background: var(--background); color: var(--accent-strong); font-size: .75rem; font-weight: 850; }
+.add-session-exercise-panel { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; margin-top: .75rem; padding: .85rem; border: 1px solid var(--border); border-radius: .9rem; background: var(--background); }
+.add-session-exercise-panel > div { display: flex; grid-column: 1 / -1; align-items: center; justify-content: space-between; }
+.add-session-exercise-panel > div button { width: 2.25rem; height: 2.25rem; border: 0; background: transparent; color: var(--muted); font-size: 1.2rem; }
+.add-session-exercise-panel label { display: grid; gap: .3rem; color: var(--muted); font-size: .68rem; font-weight: 750; }
+.add-session-exercise-panel label:first-of-type { grid-column: 1 / -1; }
+.add-session-exercise-panel select { width: 100%; min-height: 2.75rem; padding: 0 .6rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); color: var(--text); }
+.add-session-exercise-panel .primary-button { align-self: end; min-height: 2.75rem; }
+.add-session-exercise-panel > p { grid-column: 1 / -1; color: var(--muted); font-size: .65rem; }
+.add-session-exercise-panel .custom-exercise-toggle { grid-column: 1 / -1; min-height: 2.5rem; border: 0; background: transparent; color: var(--accent-strong); font-size: .72rem; font-weight: 800; text-align: left; }
+.custom-exercise-fields { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: .6rem; padding: .7rem; border-radius: .75rem; background: var(--surface); }
+.custom-exercise-fields label:first-child, .custom-exercise-fields label:nth-child(2), .custom-exercise-fields .secondary-button { grid-column: 1 / -1; }
+.custom-exercise-fields input { width: 100%; min-height: 2.75rem; padding: 0 .6rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--background); color: var(--text); }
 .itinerary-number { display: grid; flex: none; width: 1.8rem; height: 1.8rem; place-items: center; border-radius: 999px; background: var(--background); color: var(--muted); font-size: .68rem; font-weight: 850; }
 .itinerary-actions { display: flex !important; flex: none; margin-left: auto; }
 .itinerary-actions button { width: 2.5rem; height: 2.5rem; padding: 0; border: 1px solid var(--border); background: var(--background); color: var(--accent-strong); font-weight: 900; }
@@ -924,6 +936,9 @@ h2 {
 .exercise-muscle-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: .8rem 0 .35rem; }
 .exercise-muscle-chips span { padding: .3rem .5rem; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, var(--background)); color: var(--accent-strong); font-size: .64rem; font-weight: 800; }
 .exercise-muscle-chips span.secondary { background: var(--background); color: var(--muted); }
+.set-progress-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: .65rem 0 .2rem; }
+.set-progress-heading span { font-size: .72rem; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; }
+.set-progress-heading small { color: var(--muted); font-size: .68rem; }
 
 .more-button {
   flex: none;
@@ -947,6 +962,9 @@ h2 {
   color: var(--muted);
   opacity: 0.55;
 }
+.exercise-heading-actions { display: grid; flex: none; gap: .4rem; }
+.exercise-heading-actions .replace-button { width: 4.8rem; }
+.exercise-heading-actions .skip-exercise-button { border-color: color-mix(in srgb, #d9822b 48%, var(--border)); color: #d06b22; }
 
 .replacement-panel {
   margin-top: 0.9rem;
@@ -1946,6 +1964,15 @@ h2 {
 .progress-week-banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; padding: .8rem 1rem; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); border-radius: 1rem; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .progress-week-banner span { color: var(--muted); font-size: .72rem; font-weight: 750; }
 .progress-week-banner strong { font-size: .85rem; }
+.upcoming-workout-queue ol { display: grid; margin: .75rem 0 0; padding: 0; list-style: none; }
+.upcoming-workout-queue li { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr) auto; align-items: center; gap: .65rem; min-height: 3.6rem; border-top: 1px solid var(--border); }
+.upcoming-workout-queue li > span { display: grid; width: 1.65rem; height: 1.65rem; place-items: center; border-radius: 999px; background: var(--background); color: var(--muted); font-size: .68rem; font-weight: 850; }
+.upcoming-workout-queue li > div:nth-child(2) { display: grid; min-width: 0; gap: .15rem; }
+.upcoming-workout-queue li strong { overflow: hidden; font-size: .8rem; text-overflow: ellipsis; white-space: nowrap; }
+.upcoming-workout-queue li small { color: var(--muted); font-size: .67rem; }
+.upcoming-workout-queue li > div:last-child { display: flex; }
+.upcoming-workout-queue button { width: 2.4rem; height: 2.4rem; border: 1px solid var(--border); background: var(--background); color: var(--accent-strong); font-weight: 900; }
+.upcoming-workout-queue button:first-child { border-radius: .7rem 0 0 .7rem; }.upcoming-workout-queue button:last-child { margin-left: -1px; border-radius: 0 .7rem .7rem 0; }.upcoming-workout-queue button:disabled { color: var(--muted); opacity: .35; }
 .program-formal-name { margin-top: .3rem; color: var(--muted); font-size: .78rem; font-weight: 700; }
 .split-type-pill { display: inline-flex; width: fit-content; margin-top: .8rem; padding: .4rem .65rem; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, var(--background)); color: var(--accent-strong); font-size: .7rem; font-weight: 800; }
 

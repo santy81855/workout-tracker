@@ -10,6 +10,13 @@ import { BottomNavigation } from "@/components/bottom-navigation";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useActiveProgram } from "@/lib/program/use-active-program";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+
+function localDateValue(timestamp: string) {
+  const date = new Date(timestamp);
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.valueOf() - offset).toISOString().slice(0, 10);
+}
 
 export function WorkoutSummary() {
   const { document: program } = useActiveProgram();
@@ -18,6 +25,7 @@ export function WorkoutSummary() {
   const [draft, setDraft] = useState<ActiveWorkoutSession | null>(null);
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [performedDate, setPerformedDate] = useState("");
   const sessionId = searchParams.get("session");
 
   useEffect(() => {
@@ -28,6 +36,7 @@ export function WorkoutSummary() {
   function beginEditing() {
     if (!session) return;
     setDraft(structuredClone(session));
+    setPerformedDate(localDateValue(session.startedAt));
     setEditing(true);
     setMessage(null);
   }
@@ -54,8 +63,15 @@ export function WorkoutSummary() {
 
   async function saveCorrections() {
     if (!draft) return;
-    const updated = { ...draft, updatedAt: new Date().toISOString(), syncStatus: "pending" as const };
     try {
+      let correctedDraft = draft;
+      if (performedDate && performedDate !== localDateValue(session?.startedAt ?? draft.startedAt)) {
+        const { data, error } = await createSupabaseBrowserClient().rpc("correct_workout_performed_date", { p_session_id: draft.id, p_performed_date: performedDate });
+        if (error) throw new Error(error.message);
+        const correction = data as { serverRevision: number; startedAt: string; finishedAt: string | null };
+        correctedDraft = { ...draft, startedAt: correction.startedAt, finishedAt: correction.finishedAt, serverRevision: correction.serverRevision };
+      }
+      const updated = { ...correctedDraft, updatedAt: new Date().toISOString(), syncStatus: "pending" as const };
       await workoutRepository.saveActiveSession(updated);
       setSession(updated);
       setDraft(null);
@@ -100,6 +116,7 @@ export function WorkoutSummary() {
           <div className="summary-exercise-heading"><h2>Session reflection</h2><span>Optional</span></div>
           {editing ? (
             <div className="session-reflection-fields">
+              <label>Workout date<input max={localDateValue(new Date().toISOString())} onChange={(event) => setPerformedDate(event.target.value)} required type="date" value={performedDate} /></label>
               <label>Bodyweight (lb)<input inputMode="decimal" min="1" step="0.1" type="number" value={shown.bodyweightTenthsLb === null ? "" : shown.bodyweightTenthsLb / 10} onChange={(event) => updateSessionFields({ bodyweightTenthsLb: event.target.value === "" ? null : Math.round(Number(event.target.value) * 10) })} /></label>
               <label>Energy<select value={shown.energyRating ?? ""} onChange={(event) => updateSessionFields({ energyRating: event.target.value === "" ? null : Number(event.target.value) })}><option value="">Not recorded</option>{[1,2,3,4,5].map((value) => <option key={value}>{value}</option>)}</select></label>
               <label>Discomfort<select value={shown.discomfortLevel ?? ""} onChange={(event) => updateSessionFields({ discomfortLevel: event.target.value === "" ? null : event.target.value as ActiveWorkoutSession["discomfortLevel"] })}><option value="">Not recorded</option><option value="none">None</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select></label>
@@ -109,6 +126,7 @@ export function WorkoutSummary() {
             </div>
           ) : (
             <dl className="session-reflection-values">
+              <div><dt>Workout date</dt><dd>{new Date(shown.startedAt).toLocaleDateString()}</dd></div>
               <div><dt>Bodyweight</dt><dd>{shown.bodyweightTenthsLb === null ? "—" : `${shown.bodyweightTenthsLb / 10} lb`}</dd></div>
               <div><dt>Energy</dt><dd>{shown.energyRating ?? "—"}</dd></div>
               <div><dt>Discomfort</dt><dd>{shown.discomfortLevel ?? "—"}{shown.discomfortNotes ? ` · ${shown.discomfortNotes}` : ""}</dd></div>
