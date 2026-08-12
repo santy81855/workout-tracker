@@ -21,6 +21,7 @@ interface NextWorkout {
 }
 interface QueueRestDay { id: string; restDate: string }
 interface QueuedWorkout extends NextWorkout { scheduledWorkoutId: string; templateName: string; scheduledDate: string; restDays: QueueRestDay[] }
+type RecoverableSkippedWorkout = Omit<QueuedWorkout, "restDays">;
 
 const UPCOMING_PREVIEW_COUNT = 5;
 const UPCOMING_FETCH_LIMIT = 10;
@@ -45,12 +46,19 @@ export function TodayDashboard() {
   const [queueDropIndex, setQueueDropIndex] = useState<number | null>(null);
   const [addingRest, setAddingRest] = useState(false);
   const [deletingRest, setDeletingRest] = useState<string | null>(null);
+  const [recoverableSkip, setRecoverableSkip] = useState<RecoverableSkippedWorkout | null>(null);
+  const [changingSkip, setChangingSkip] = useState(false);
   const dragStartIndex = useRef<number | null>(null);
   const draggingRestDay = useRef<string | null>(null);
 
   useEffect(() => {
-    void flushWorkoutOutbox().then(() => Promise.all([workoutRepository.getActiveSession(), listAvailableSessions(), createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: UPCOMING_FETCH_LIMIT })]))
-      .then(([active, sessions, queueResult]) => {
+    void flushWorkoutOutbox().then(() => Promise.all([
+      workoutRepository.getActiveSession(),
+      listAvailableSessions(),
+      createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: UPCOMING_FETCH_LIMIT }),
+      createSupabaseBrowserClient().rpc("get_recoverable_skipped_workout"),
+    ]))
+      .then(([active, sessions, queueResult, skippedResult]) => {
         const cycleSessions = sessions.filter((session) => session.programSlug === program.slug && session.cycleStartsOn === cycleStartsOn);
         // An active workout may already have synced on another device (or have
         // outlived this browser's IndexedDB). Treat the server copy as active so
@@ -77,6 +85,7 @@ export function TodayDashboard() {
           .slice(0, UPCOMING_PREVIEW_COUNT);
         setUpcomingQueue(queue);
         setNextWorkout(queue[0] ?? fallbackNext);
+        setRecoverableSkip(skippedResult.error ? null : (skippedResult.data as RecoverableSkippedWorkout | null));
       })
       .catch(() => setError("The locally saved workout could not be loaded."))
       .finally(() => setLoading(false));
@@ -160,6 +169,18 @@ export function TodayDashboard() {
     setDeletingRest(null);
   }
 
+  async function changeSkippedWorkout(action: "skip" | "unskip") {
+    const workout = action === "skip" ? upcomingQueue[0] : recoverableSkip;
+    if (!workout || activeSession || changingSkip) return;
+    if (action === "skip" && !window.confirm(`Skip ${workout.templateName}? You can undo this until you complete the next workout.`)) return;
+    setChangingSkip(true); setError(null);
+    const rpc = action === "skip" ? "skip_scheduled_workout" : "unskip_scheduled_workout";
+    const { error: changeError } = await createSupabaseBrowserClient().rpc(rpc, { p_scheduled_workout_id: workout.scheduledWorkoutId });
+    if (changeError) setError(changeError.message);
+    else window.location.reload();
+    setChangingSkip(false);
+  }
+
   const displayedSession = activeSession;
   const template = program.workoutTemplates.find((candidate) => candidate.sequence === nextWorkout.templateSequence)
     ?? program.workoutTemplates[0];
@@ -202,16 +223,18 @@ export function TodayDashboard() {
               ? "Week 1 starts with one working set per exercise."
               : `You’re now training in Week ${displayedWeek}.`}
       </p>
+      {!activeSession && !cycleComplete && upcomingQueue[0] ? <button className="skip-workout-button" disabled={changingSkip} onClick={() => void changeSkippedWorkout("skip")} type="button">Skip this workout</button> : null}
       {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
     </section>
 
-    {upcomingQueue.length > 1 ? <section className="section-block upcoming-workout-queue" aria-labelledby="upcoming-workouts-title">
+    {upcomingQueue.length > 1 || recoverableSkip ? <section className="section-block upcoming-workout-queue" aria-labelledby="upcoming-workouts-title">
       <div className="section-heading"><div><p className="eyebrow">Flexible order</p><h2 id="upcoming-workouts-title">Upcoming workouts</h2></div><button className="add-rest-day-button" disabled={activeSession !== null || addingRest} onClick={() => void addRestDay()} type="button">{addingRest ? "Adding…" : "+ Rest day"}</button></div>
       <p className="muted-copy">Drag workouts into the order that fits your recovery. Adding a rest day moves the whole queue back one day.</p>
       <ol>{upcomingQueue.map((queued, index) => <Fragment key={queued.scheduledWorkoutId}>
         {queued.restDays.map((restDay) => <li className="queue-rest-day" key={restDay.id}><button className="drag-handle" aria-label={`Drag rest day before ${queued.templateName}`} disabled={activeSession !== null || reordering} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); draggingRestDay.current = restDay.id; setQueueDropIndex(index); }} onPointerMove={(event) => { if (!draggingRestDay.current) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-queue-index]"); if (target) setQueueDropIndex(Number(target.dataset.queueIndex)); }} onPointerUp={() => void finishRestDayDrag()} onPointerCancel={() => void finishRestDayDrag()} type="button">⠿</button><div><strong>Rest day</strong><small>Recovery before {queued.templateName}</small></div><button className="delete-rest-day" aria-label={`Delete rest day before ${queued.templateName}`} disabled={deletingRest !== null} onClick={() => void deleteRestDay(restDay.id)} type="button">{deletingRest === restDay.id ? "…" : "×"}</button></li>)}
         <li className={draggingQueueIndex === index ? "dragging" : queueDropIndex === index ? "drag-target" : undefined} data-queue-index={index}><button className="drag-handle" aria-label={`Drag ${queued.templateName}`} disabled={activeSession !== null || reordering} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); dragStartIndex.current = index; setDraggingQueueIndex(index); setQueueDropIndex(index); }} onPointerMove={(event) => { if (dragStartIndex.current === null) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-queue-index]"); if (target) setQueueDropIndex(Number(target.dataset.queueIndex)); }} onPointerUp={finishQueueDrag} onPointerCancel={finishQueueDrag} type="button">⠿</button><div><strong>{queued.templateName}</strong><small>Week {queued.programWeek} · {new Date(`${queued.scheduledDate}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</small></div></li>
       </Fragment>)}</ol>
+      {recoverableSkip ? <div className="recoverable-skipped-workout"><div><span>Skipped</span><strong>{recoverableSkip.templateName}</strong><small>Week {recoverableSkip.programWeek} · restore before completing the next workout</small></div><button disabled={changingSkip || activeSession !== null} onClick={() => void changeSkippedWorkout("unskip")} type="button">{changingSkip ? "Restoring…" : "Unskip"}</button></div> : null}
       {activeSession ? <p className="helper-text">Finish or cancel the active workout before changing the queue.</p> : null}
     </section> : null}
 

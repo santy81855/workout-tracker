@@ -1983,6 +1983,13 @@ h2 {
 .upcoming-workout-queue li small { color: var(--muted); font-size: .67rem; }
 .upcoming-workout-queue .drag-handle { width: 2.4rem; height: 2.4rem; padding: 0; border: 1px solid var(--border); border-radius: .7rem; background: var(--background); color: var(--accent-strong); font-size: 1.1rem; font-weight: 900; }
 .upcoming-workout-queue button:disabled { color: var(--muted); opacity: .35; }
+.skip-workout-button { display: block; margin: .75rem auto 0; border: 0; background: transparent; color: var(--muted); font-size: .75rem; text-decoration: underline; }
+.recoverable-skipped-workout { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .8rem; padding: .85rem; border: 1px dashed var(--border); border-radius: .85rem; background: color-mix(in srgb, var(--surface) 70%, var(--background)); color: var(--muted); opacity: .82; }
+.recoverable-skipped-workout > div { display: grid; min-width: 0; gap: .15rem; }
+.recoverable-skipped-workout span { font-size: .62rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.recoverable-skipped-workout strong { color: var(--foreground); font-size: .82rem; }
+.recoverable-skipped-workout small { font-size: .66rem; }
+.recoverable-skipped-workout button { flex: 0 0 auto; min-height: 2.5rem; padding: 0 .8rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); color: var(--accent-strong); font-weight: 800; }
 .add-rest-day-button { min-height: 2.5rem; padding: 0 .7rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--background); color: var(--accent-strong); font-size: .7rem; font-weight: 800; }
 .upcoming-workout-queue .queue-rest-day { grid-template-columns: 2.5rem minmax(0, 1fr) 2.4rem; color: var(--muted); }
 .queue-rest-day > span { display: grid; place-items: center; font-size: 1rem; }

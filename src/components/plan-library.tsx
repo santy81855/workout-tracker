@@ -25,7 +25,9 @@ export function PlanLibrary({ showStarter = false }: { showStarter?: boolean }) 
     const { error } = await createSupabaseBrowserClient().rpc("activate_program_cycle", { p_document: defaultProgram, p_starts_on: startsOn });
     if (error) { setMessage(error.message); setPending(null); return; }
     await saveActiveProgramRecord({ document: defaultProgram, startsOn, activatedAt: new Date().toISOString() });
-    router.push("/"); router.refresh();
+    // This component is often already rendered on `/`; a client-side push to
+    // the same route does not remount the active-program hook.
+    window.location.replace("/");
   }
 
   async function resume(cycle: LibraryCycle) {

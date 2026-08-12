@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(57);
+select plan(63);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -264,6 +264,15 @@ select lives_ok(
 select is(jsonb_array_length(public.get_upcoming_workout_queue(5)->0->'restDays'), 1, 'the upcoming queue exposes the inserted rest day');
 select lives_ok($$select public.remove_scheduled_rest_day((public.get_upcoming_workout_queue(5)->0->'restDays'->0->>'id')::uuid)$$, 'owner can delete a queued rest day');
 select is(jsonb_array_length(public.get_upcoming_workout_queue(5)->0->'restDays'), 0, 'deleted rest day disappears from the queue');
+
+create temporary table skipped_target as
+select (public.get_upcoming_workout_queue(5)->0->>'scheduledWorkoutId')::uuid as id;
+select lives_ok($$select public.skip_scheduled_workout((select id from skipped_target))$$, 'owner can explicitly skip the next workout');
+select is((select status::text from public.scheduled_workouts where id = (select id from skipped_target)), 'skipped', 'explicit skip marks the workout skipped');
+select is((public.get_recoverable_skipped_workout()->>'scheduledWorkoutId')::uuid, (select id from skipped_target), 'the explicit skip is offered for recovery');
+select lives_ok($$select public.unskip_scheduled_workout((select id from skipped_target))$$, 'owner can undo the explicit skip before completing another workout');
+select is((select status::text from public.scheduled_workouts where id = (select id from skipped_target)), 'queued', 'unskip returns the workout to its original queue slot');
+select is((select skipped_reason from public.scheduled_workouts where id = (select id from skipped_target)), null, 'unskip clears the user skip marker');
 
 create temporary table deletion_target as select scheduled_workout_id from public.workout_sessions where id = '50000000-0000-4000-8000-000000000001';
 update public.workout_sessions set status = 'completed', finished_at = coalesce(finished_at, now())
