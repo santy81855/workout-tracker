@@ -893,7 +893,7 @@ h2 {
 .add-session-exercise-panel > div button { width: 2.25rem; height: 2.25rem; border: 0; background: transparent; color: var(--muted); font-size: 1.2rem; }
 .add-session-exercise-panel label { display: grid; gap: .3rem; color: var(--muted); font-size: .68rem; font-weight: 750; }
 .add-session-exercise-panel label:first-of-type { grid-column: 1 / -1; }
-.add-session-exercise-panel select { width: 100%; min-height: 2.75rem; padding: 0 .6rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); color: var(--text); }
+.add-session-exercise-panel select { width: 100%; min-height: 3rem; padding: .7rem 2rem .7rem .7rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); color: var(--text); line-height: 1.35; }
 .add-session-exercise-panel .primary-button { grid-column: 1 / -1; width: 100%; min-height: 2.75rem; }
 .add-session-exercise-panel > p { grid-column: 1 / -1; color: var(--muted); font-size: .65rem; }
 .add-session-exercise-panel .custom-exercise-toggle { grid-column: 1 / -1; min-height: 2.5rem; border: 0; background: transparent; color: var(--accent-strong); font-size: .72rem; font-weight: 800; text-align: left; }
@@ -1299,6 +1299,12 @@ h2 {
   display: grid;
   gap: 0.75rem;
 }
+.delete-workout-button { min-height: 2.75rem; border: 1px solid color-mix(in srgb, #d84b4b 45%, var(--border)); border-radius: .8rem; background: transparent; color: #d84b4b; font-weight: 800; }
+.delete-workout-confirm { display: grid; gap: .65rem; padding: .85rem; border: 1px solid color-mix(in srgb, #d84b4b 40%, var(--border)); border-radius: .9rem; background: var(--background); text-align: left; }
+.delete-workout-confirm p { margin: 0; color: var(--muted); font-size: .75rem; line-height: 1.5; }
+.delete-workout-confirm > div { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.delete-workout-confirm button { min-height: 2.75rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); color: var(--text); font-weight: 800; }
+.delete-workout-confirm .danger-button { border-color: #d84b4b; background: #d84b4b; color: white; }
 
 .summary-exercises {
   margin-bottom: 1rem;

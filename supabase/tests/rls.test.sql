@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(50);
+select plan(53);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -256,7 +256,16 @@ select lives_ok(
   $$select public.insert_rest_day_before_workout((public.get_upcoming_workout_queue(5)->0->>'scheduledWorkoutId')::uuid)$$,
   'owner can add a rest day before the next workout'
 );
-select is((public.get_upcoming_workout_queue(5)->0->>'restDaysBefore')::integer, 1, 'the upcoming queue exposes the inserted rest day');
+select is(jsonb_array_length(public.get_upcoming_workout_queue(5)->0->'restDays'), 1, 'the upcoming queue exposes the inserted rest day');
+
+create temporary table deletion_target as select scheduled_workout_id from public.workout_sessions where id = '50000000-0000-4000-8000-000000000001';
+update public.workout_sessions set status = 'completed', finished_at = coalesce(finished_at, now())
+where id = '50000000-0000-4000-8000-000000000001';
+update public.scheduled_workouts set status = 'completed'
+where id = (select scheduled_workout_id from public.workout_sessions where id = '50000000-0000-4000-8000-000000000001');
+select lives_ok($$select public.remove_completed_workout('50000000-0000-4000-8000-000000000001')$$, 'owner can delete a completed workout');
+select is((select count(*)::integer from public.workout_sessions where id = '50000000-0000-4000-8000-000000000001'), 0, 'deleted workout is removed from history storage');
+select is((select status::text from public.scheduled_workouts where id = (select scheduled_workout_id from deletion_target)), 'queued', 'deleting a completed workout returns its slot to the queue');
 
 select * from finish();
 rollback;

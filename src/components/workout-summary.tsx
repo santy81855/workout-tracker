@@ -7,7 +7,7 @@ import { flushWorkoutOutbox } from "@/lib/workout/sync";
 import type { ActiveWorkoutSession } from "@/lib/workout/types";
 import Link from "next/link";
 import { BottomNavigation } from "@/components/bottom-navigation";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useActiveProgram } from "@/lib/program/use-active-program";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -19,13 +19,17 @@ function localDateValue(timestamp: string) {
 }
 
 export function WorkoutSummary() {
+  const router = useRouter();
   const { document: program } = useActiveProgram();
   const searchParams = useSearchParams();
   const [session, setSession] = useState<ActiveWorkoutSession | null>(null);
   const [draft, setDraft] = useState<ActiveWorkoutSession | null>(null);
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageKind, setMessageKind] = useState<"success" | "error">("success");
   const [performedDate, setPerformedDate] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const sessionId = searchParams.get("session");
 
   useEffect(() => {
@@ -89,11 +93,29 @@ export function WorkoutSummary() {
       setSession(updated);
       setDraft(null);
       setEditing(false);
-      setMessage("Workout updates saved on this device and queued to sync.");
-      void flushWorkoutOutbox();
+      await flushWorkoutOutbox();
+      const remaining = await workoutRepository.listOutbox();
+      const refreshed = await workoutRepository.getSession(updated.id);
+      if (refreshed) setSession(refreshed);
+      setMessageKind("success");
+      setMessage(remaining.some((operation) => operation.sessionId === updated.id)
+        ? "Workout updated on this device. It will sync automatically when a connection is available."
+        : "Workout updated and synced to your account.");
     } catch (error) {
+      setMessageKind("error");
       setMessage(error instanceof Error ? error.message : "The workout could not be updated. Review the values and try again.");
     }
+  }
+
+  async function deleteWorkout() {
+    if (!session) return;
+    setDeleting(true); setMessage(null);
+    const { error } = await createSupabaseBrowserClient().rpc("remove_completed_workout", { p_session_id: session.id });
+    if (error && !error.message.toLowerCase().includes("completed workout not found")) {
+      setMessage(error.message); setDeleting(false); return;
+    }
+    await workoutRepository.deleteSession(session.id);
+    router.push("/history"); router.refresh();
   }
 
   const metrics = useMemo(() => {
@@ -184,11 +206,13 @@ export function WorkoutSummary() {
           ))}
         </div>
 
-        {message ? <p className="form-message" role="status">{message}</p> : null}
+        {message ? <p className={`form-message form-message-${messageKind}`} role="status">{message}</p> : null}
         <div className="summary-actions">
           {editing ? (
             <><button className="primary-button" onClick={saveUpdates} type="button">Save Updates</button><button className="secondary-button" onClick={() => { setEditing(false); setDraft(null); }} type="button">Cancel</button></>
           ) : <button className="secondary-button" onClick={beginEditing} type="button">Edit Workout</button>}
+          {!editing && !confirmDelete ? <button className="delete-workout-button" onClick={() => setConfirmDelete(true)} type="button">Delete Workout</button> : null}
+          {confirmDelete ? <div className="delete-workout-confirm" role="alertdialog" aria-label="Delete this completed workout?"><strong>Delete this workout?</strong><p>It will leave your history and return to your upcoming workout queue.</p><div><button disabled={deleting} onClick={() => setConfirmDelete(false)} type="button">Keep Workout</button><button className="danger-button" disabled={deleting} onClick={() => void deleteWorkout()} type="button">{deleting ? "Deleting…" : "Delete Workout"}</button></div></div> : null}
           {session.templateSequence === program.workoutsPerWeek ? <Link className="weekly-review-link" href={`/check-in?week=${session.programWeek}`}>Complete Week {session.programWeek} Review</Link> : null}
           <Link className="primary-link" href="/">Return to Today</Link>
         </div>
