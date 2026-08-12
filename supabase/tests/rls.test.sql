@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(63);
+select plan(69);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -273,6 +273,13 @@ select is((public.get_recoverable_skipped_workout()->>'scheduledWorkoutId')::uui
 select lives_ok($$select public.unskip_scheduled_workout((select id from skipped_target))$$, 'owner can undo the explicit skip before completing another workout');
 select is((select status::text from public.scheduled_workouts where id = (select id from skipped_target)), 'queued', 'unskip returns the workout to its original queue slot');
 select is((select skipped_reason from public.scheduled_workouts where id = (select id from skipped_target)), null, 'unskip clears the user skip marker');
+
+select lives_ok($$select public.skip_scheduled_workout((public.get_upcoming_workout_queue(5)->0->>'scheduledWorkoutId')::uuid)$$, 'owner can skip the first queued workout');
+select lives_ok($$select public.skip_scheduled_workout((public.get_upcoming_workout_queue(5)->0->>'scheduledWorkoutId')::uuid)$$, 'owner can immediately skip the next queued workout too');
+select isnt((public.get_recoverable_skipped_workout()->>'scheduledWorkoutId')::uuid, (select id from skipped_target), 'the most recent skip is offered first');
+select lives_ok($$select public.unskip_scheduled_workout((public.get_recoverable_skipped_workout()->>'scheduledWorkoutId')::uuid)$$, 'the most recent skip can be restored first');
+select is((public.get_recoverable_skipped_workout()->>'scheduledWorkoutId')::uuid, (select id from skipped_target), 'restoring the latest skip reveals the previous skip');
+select lives_ok($$select public.unskip_scheduled_workout((select id from skipped_target))$$, 'the previous skip can then be restored');
 
 create temporary table deletion_target as select scheduled_workout_id from public.workout_sessions where id = '50000000-0000-4000-8000-000000000001';
 update public.workout_sessions set status = 'completed', finished_at = coalesce(finished_at, now())

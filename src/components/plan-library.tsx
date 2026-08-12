@@ -6,6 +6,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { downloadText } from "@/lib/export/user-data";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ProgramImportPanel } from "@/components/program-import-panel";
 
 interface LibraryCycle { cycleId: string; status: "active" | "planned" | "completed" | "abandoned"; startsOn: string; completedAt: string | null; document: ProgramDocument; completedSessions: number }
 function upcomingMonday() { const date = new Date(); const days = ((8 - date.getDay()) % 7) || 7; date.setDate(date.getDate() + days); return date.toISOString().slice(0, 10); }
@@ -17,6 +18,7 @@ export function PlanLibrary({ showStarter = false }: { showStarter?: boolean }) 
   const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [showImport, setShowImport] = useState(false);
   useEffect(() => { void createSupabaseBrowserClient().rpc("get_program_library").then(({ data }) => setCycles((data as LibraryCycle[] | null) ?? [])); }, []);
 
   async function useStarter() {
@@ -50,7 +52,8 @@ export function PlanLibrary({ showStarter = false }: { showStarter?: boolean }) 
   }
 
   return <section className="program-section plan-library" aria-labelledby="plan-library-title">
-    <div className="section-heading"><div><p className="eyebrow">Your plans</p><h2 id="plan-library-title">Plan library</h2></div></div>
+    <div className="section-heading"><div><p className="eyebrow">Your plans</p><h2 id="plan-library-title">Plan library</h2></div><button className="plan-library-import-button" onClick={() => setShowImport((shown) => !shown)} type="button">{showImport ? "Close" : "Import"}</button></div>
+    {showImport ? <ProgramImportPanel onComplete={() => window.location.reload()} /> : null}
     {showStarter ? <article className="library-plan starter-plan"><div><span className="library-status">Starter plan</span><h3>{defaultProgram.displayTitle ?? defaultProgram.name}</h3><p>{defaultProgram.name} · {defaultProgram.splitType}</p></div><button className="primary-button" disabled={pending !== null} onClick={useStarter} type="button">{pending === "starter" ? "Starting…" : "Use this plan"}</button></article> : null}
     {cycles === null ? <p className="muted-copy list-status">Loading your plans…</p> : cycles.length === 0 && !showStarter ? <p className="muted-copy list-status">No saved plans yet.</p> : <div className="library-list">{cycles.map((cycle) => <article className="library-plan" key={cycle.cycleId}><div className="library-plan-copy"><span className={`library-status library-status-${cycle.status}`}>{cycle.status === "planned" ? cycle.completedSessions ? "Paused" : "Saved" : cycle.status}</span><h3>{cycle.document.displayTitle ?? cycle.document.name}</h3><p>{cycle.document.name} · {cycle.completedSessions} of {cycle.document.weekCount * cycle.document.workoutsPerWeek} sessions</p></div><div className="library-plan-actions">{cycle.status === "planned" ? <button disabled={pending !== null} onClick={() => resume(cycle)} type="button">{pending === cycle.cycleId ? "Starting…" : cycle.completedSessions ? "Resume" : "Start"}</button> : null}<button onClick={() => exportPlan(cycle)} type="button">Export</button><button className="library-remove-button" disabled={pending !== null} onClick={() => setConfirmRemove(cycle.cycleId)} type="button">Remove</button></div>{confirmRemove === cycle.cycleId ? <div className="library-remove-confirm" role="alertdialog" aria-label={`Remove ${cycle.document.displayTitle ?? cycle.document.name}?`}><strong>Remove this plan?</strong><p>{cycle.status === "active" || cycle.completedSessions > 0 ? "It will disappear from your plan library, but completed workout history will be preserved." : "It will disappear from your plan library."}</p><div><button onClick={() => setConfirmRemove(null)} type="button">Keep plan</button><button className="danger-button" disabled={pending !== null} onClick={() => void remove(cycle)} type="button">{pending === `remove-${cycle.cycleId}` ? "Removing…" : "Remove plan"}</button></div></div> : null}</article>)}</div>}
     {message ? <p className="form-message" role="status">{message}</p> : null}

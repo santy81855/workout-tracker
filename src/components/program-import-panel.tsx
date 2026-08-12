@@ -13,7 +13,7 @@ function today() {
   return new Date(date.valueOf() - offset).toISOString().slice(0, 10);
 }
 
-export function ProgramImportPanel() {
+export function ProgramImportPanel({ onComplete }: { onComplete?: () => void } = {}) {
   const router = useRouter();
   const [document, setDocument] = useState<ProgramDocument | null>(null);
   const [startsOn, setStartsOn] = useState(today);
@@ -51,8 +51,8 @@ export function ProgramImportPanel() {
       const { error } = await createSupabaseBrowserClient().rpc("activate_program_cycle", { p_document: document, p_starts_on: startsOn });
       if (error) throw new Error(error.message);
       await saveActiveProgramRecord({ document, startsOn, activatedAt: new Date().toISOString() });
-      router.push("/");
-      router.refresh();
+      if (onComplete) onComplete();
+      else window.location.replace("/");
     } catch (error) {
       setMessageKind("error"); setMessage(error instanceof Error ? error.message : "The program could not be activated.");
       setActivating(false);
@@ -67,7 +67,8 @@ export function ProgramImportPanel() {
       if (error) throw new Error(error.message);
       setMessageKind("success"); setMessage("Plan added to your library. Your current plan is still active.");
       setDocument(null);
-      router.refresh();
+      if (onComplete) onComplete();
+      else router.refresh();
     } catch (error) { setMessageKind("error"); setMessage(error instanceof Error ? error.message : "The plan could not be saved."); }
     finally { setSaving(false); }
   }
