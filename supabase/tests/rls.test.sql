@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(55);
+select plan(57);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -176,6 +176,11 @@ select lives_ok(
 select is((select count(*)::integer from public.workout_sessions), 1, 'session synchronization creates one workout session');
 select is((select count(*)::integer from public.exercise_sets), 1, 'session synchronization creates the completed set');
 select is(jsonb_array_length(public.get_workout_history()), 1, 'owner history projection returns the synchronized session');
+select lives_ok(
+  $$select public.bootstrap_program_cycle((select source_json from public.program_revisions where user_id = auth.uid() order by created_at limit 1), '2026-08-10')$$,
+  'repeated bootstrap leaves a referenced active-cycle queue intact'
+);
+select is((select count(*)::integer from public.scheduled_workouts), 60, 'repeated bootstrap does not recreate scheduled workouts');
 select throws_ok(
   $$select public.sync_workout_session('{"id":"50000000-0000-4000-8000-000000000001","status":"active","programWeek":1,"templateName":"Test Day 1","serverRevision":0}'::jsonb)$$,
   'P0001',
