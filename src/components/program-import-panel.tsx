@@ -7,17 +7,16 @@ import { workoutRepository } from "@/lib/workout/indexeddb-repository";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-function upcomingMonday() {
+function today() {
   const date = new Date();
-  const days = ((8 - date.getDay()) % 7) || 7;
-  date.setDate(date.getDate() + days);
-  return date.toISOString().slice(0, 10);
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.valueOf() - offset).toISOString().slice(0, 10);
 }
 
 export function ProgramImportPanel() {
   const router = useRouter();
   const [document, setDocument] = useState<ProgramDocument | null>(null);
-  const [startsOn, setStartsOn] = useState(upcomingMonday);
+  const [startsOn, setStartsOn] = useState(today);
   const [message, setMessage] = useState<string | null>(null);
   const [messageKind, setMessageKind] = useState<"info" | "success" | "error">("info");
   const [activating, setActivating] = useState(false);
@@ -46,8 +45,7 @@ export function ProgramImportPanel() {
     if (!document) return;
     setActivating(true); setMessage(null);
     try {
-      const start = new Date(`${startsOn}T12:00:00`);
-      if (start.getDay() !== 1) throw new Error("Choose a Monday start date.");
+      if (!startsOn) throw new Error("Choose a start date.");
       if (await workoutRepository.getActiveSession()) throw new Error("Finish the active workout before changing cycles.");
       if ((await workoutRepository.listOutbox()).length > 0) throw new Error("Wait for pending workout changes to sync before changing cycles.");
       const { error } = await createSupabaseBrowserClient().rpc("activate_program_cycle", { p_document: document, p_starts_on: startsOn });
@@ -83,7 +81,7 @@ export function ProgramImportPanel() {
         <div className="program-import-preview">
           <strong>{document.name}</strong><span>{document.weekCount} weeks · {document.workoutsPerWeek * document.weekCount} workouts · {document.exercises.length} exercises</span>
           <ol>{document.workoutTemplates.map((template) => <li key={template.sequence}>{template.name} <small>{template.exercises.length} exercises</small></li>)}</ol>
-          <label>Cycle starts<input min={upcomingMonday()} onChange={(event) => setStartsOn(event.target.value)} type="date" value={startsOn} /></label>
+          <label>Cycle starts<input min={today()} onChange={(event) => setStartsOn(event.target.value)} type="date" value={startsOn} /></label>
           <button className="primary-button" disabled={activating || saving} onClick={activate} type="button">{activating ? "Activating…" : "Pause Current Plan and Activate"}</button>
           <button className="secondary-button" disabled={activating || saving} onClick={saveForLater} type="button">{saving ? "Adding…" : "Add to Library for Later"}</button>
         </div>

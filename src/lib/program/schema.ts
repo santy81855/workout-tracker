@@ -107,6 +107,7 @@ export const programDocumentSchema = z
     const muscleSlugs = new Set(program.muscleGroups);
     const weeks = new Set(program.weekRules.map((rule) => rule.week));
     const templateSequences = new Set(program.workoutTemplates.map((template) => template.sequence));
+    const usedPeakSets = new Set(program.workoutTemplates.flatMap((template) => template.exercises.map((exercise) => exercise.peakSets)));
 
     if (program.weekRules.length !== program.weekCount) {
       context.addIssue({ code: "custom", path: ["weekRules"], message: `Expected exactly ${program.weekCount} week rules` });
@@ -166,7 +167,27 @@ export const programDocumentSchema = z
         }
       }
     }
+
+    for (const weekRule of program.weekRules) {
+      for (const peak of [2, 3, 4] as const) {
+        const rule = weekRule.setRules[`peak${peak}`];
+        if (usedPeakSets.has(peak) && rule.required + rule.optional > peak) {
+          context.addIssue({ code: "custom", path: ["weekRules", weekRule.week - 1, "setRules", `peak${peak}`], message: `Exercises that peak at ${peak} sets cannot be prescribed more than ${peak} sets` });
+        }
+      }
+    }
   })
-  .transform((program) => program.trainingDaysPerWeek === undefined ? program : { ...program, workoutsPerWeek: program.trainingDaysPerWeek });
+  .transform((program) => {
+    const usedPeakSets = new Set(program.workoutTemplates.flatMap((template) => template.exercises.map((exercise) => exercise.peakSets)));
+    const weekRules = program.weekRules.map((weekRule) => ({
+      ...weekRule,
+      setRules: Object.fromEntries(([2, 3, 4] as const).map((peak) => {
+        const key = `peak${peak}` as const;
+        const rule = weekRule.setRules[key];
+        return [key, usedPeakSets.has(peak) ? rule : { required: Math.min(rule.required, peak), optional: Math.min(rule.optional, Math.max(0, peak - Math.min(rule.required, peak))) }];
+      })) as typeof weekRule.setRules,
+    }));
+    return { ...program, weekRules, workoutsPerWeek: program.trainingDaysPerWeek ?? program.workoutsPerWeek };
+  });
 
 export type ProgramDocument = z.infer<typeof programDocumentSchema>;

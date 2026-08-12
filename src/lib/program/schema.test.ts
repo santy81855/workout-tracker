@@ -61,4 +61,13 @@ describe("program document", () => {
     expect(rolling.workoutsPerWeek).toBe(5);
     expect(programDocumentSchema.safeParse(rolling).success).toBe(true);
   });
+
+  it("normalizes an unused legacy peak-set bucket without changing used prescriptions", () => {
+    const rolling = structuredClone(programJson);
+    for (const template of rolling.workoutTemplates) for (const exercise of template.exercises) exercise.peakSets = exercise.peakSets === 2 ? 3 : exercise.peakSets;
+    for (const week of rolling.weekRules) week.setRules.peak2.required = 3;
+    const parsed = programDocumentSchema.parse(rolling);
+    expect(parsed.weekRules[0].setRules.peak2.required).toBe(2);
+    expect(parsed.weekRules[0].setRules.peak3).toEqual(rolling.weekRules[0].setRules.peak3);
+  });
 });
