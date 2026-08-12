@@ -58,6 +58,8 @@ export function ActiveWorkout() {
   const [creatingExercise, setCreatingExercise] = useState(false);
   const syncTimer = useRef<number | null>(null);
   const cancelPanel = useRef<HTMLElement | null>(null);
+  const itineraryDragStart = useRef<number | null>(null);
+  const [itineraryDropIndex, setItineraryDropIndex] = useState<number | null>(null);
 
   useEffect(() => {
     workoutRepository
@@ -215,13 +217,19 @@ export function ActiveWorkout() {
     void commit({ ...session, exercises });
   }
 
-  function moveUpcomingExercise(index: number, direction: -1 | 1) {
+  function moveUpcomingExercise(index: number, target: number) {
     if (!session) return;
-    const target = index + direction;
     if (index <= session.activeExerciseIndex || target <= session.activeExerciseIndex || target >= session.exercises.length) return;
     const exercises = [...session.exercises];
-    [exercises[index], exercises[target]] = [exercises[target], exercises[index]];
+    const [moved] = exercises.splice(index, 1);
+    exercises.splice(target, 0, moved);
     void commit({ ...session, exercises });
+  }
+
+  function finishItineraryDrag() {
+    const from = itineraryDragStart.current; const to = itineraryDropIndex;
+    itineraryDragStart.current = null; setItineraryDropIndex(null);
+    if (from !== null && to !== null && from !== to) moveUpcomingExercise(from, to);
   }
 
   function makeExerciseCurrent(index: number) {
@@ -656,13 +664,12 @@ export function ActiveWorkout() {
             const absoluteIndex = session.activeExerciseIndex + offset + 1;
             const completed = upcoming.sets.filter((set) => set.status === "completed").length;
             return (
-              <li key={upcoming.id}>
+              <li className={itineraryDropIndex === absoluteIndex ? "drag-target" : undefined} data-itinerary-index={absoluteIndex} key={upcoming.id}>
                 <span className="itinerary-number">{session.activeExerciseIndex + offset + 2}</span>
                 <div><strong>{upcoming.name}</strong><small>{upcoming.sets.length} sets · {upcoming.repMin}–{upcoming.repMax} reps{completed ? ` · ${completed} completed` : ""}</small></div>
                 <div className="itinerary-actions">
                   <button className="do-now-button" aria-label={`Make ${upcoming.name} the current exercise`} onClick={() => makeExerciseCurrent(absoluteIndex)} type="button">Do now</button>
-                  <button aria-label={`Move ${upcoming.name} earlier`} disabled={offset === 0} onClick={() => moveUpcomingExercise(absoluteIndex, -1)} type="button">↑</button>
-                  <button aria-label={`Move ${upcoming.name} later`} disabled={absoluteIndex === session.exercises.length - 1} onClick={() => moveUpcomingExercise(absoluteIndex, 1)} type="button">↓</button>
+                  <button className="drag-handle" aria-label={`Drag ${upcoming.name} to reorder`} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); itineraryDragStart.current = absoluteIndex; setItineraryDropIndex(absoluteIndex); }} onPointerMove={(event) => { if (itineraryDragStart.current === null) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-itinerary-index]"); if (target) setItineraryDropIndex(Number(target.dataset.itineraryIndex)); }} onPointerUp={finishItineraryDrag} onPointerCancel={finishItineraryDrag} type="button">⠿</button>
                 </div>
               </li>
             );

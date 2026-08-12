@@ -61,26 +61,38 @@ export function WorkoutSummary() {
     setDraft((current) => current ? { ...current, ...change } : current);
   }
 
-  async function saveCorrections() {
+  function withPerformedDate(value: ActiveWorkoutSession, dateValue: string) {
+    const originalStart = new Date(value.startedAt);
+    const [year, month, day] = dateValue.split("-").map(Number);
+    const nextStart = new Date(originalStart);
+    nextStart.setFullYear(year, month - 1, day);
+    const duration = value.finishedAt ? new Date(value.finishedAt).valueOf() - originalStart.valueOf() : null;
+    return { ...value, startedAt: nextStart.toISOString(), finishedAt: duration === null ? null : new Date(nextStart.valueOf() + duration).toISOString() };
+  }
+
+  async function saveUpdates() {
     if (!draft) return;
     try {
       if (!performedDate) throw new Error("Choose a valid workout date.");
-      let correctedDraft = draft;
+      let updatedDraft = draft;
       if (performedDate && performedDate !== localDateValue(session?.startedAt ?? draft.startedAt)) {
         const { data, error } = await createSupabaseBrowserClient().rpc("correct_workout_performed_date", { p_session_id: draft.id, p_performed_date: performedDate });
-        if (error) throw new Error(error.message);
-        const correction = data as { serverRevision: number; startedAt: string; finishedAt: string | null };
-        correctedDraft = { ...draft, startedAt: correction.startedAt, finishedAt: correction.finishedAt, serverRevision: correction.serverRevision };
+        if (error && !error.message.toLowerCase().includes("completed workout not found")) throw new Error(error.message);
+        if (error) updatedDraft = withPerformedDate(draft, performedDate);
+        else {
+          const correction = data as { serverRevision: number; startedAt: string; finishedAt: string | null };
+          updatedDraft = { ...draft, startedAt: correction.startedAt, finishedAt: correction.finishedAt, serverRevision: correction.serverRevision };
+        }
       }
-      const updated = { ...correctedDraft, updatedAt: new Date().toISOString(), syncStatus: "pending" as const };
+      const updated = { ...updatedDraft, updatedAt: new Date().toISOString(), syncStatus: "pending" as const };
       await workoutRepository.saveActiveSession(updated);
       setSession(updated);
       setDraft(null);
       setEditing(false);
-      setMessage("Corrections saved on this device and queued to sync.");
+      setMessage("Workout updates saved on this device and queued to sync.");
       void flushWorkoutOutbox();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "The corrections could not be saved. Review the values and try again.");
+      setMessage(error instanceof Error ? error.message : "The workout could not be updated. Review the values and try again.");
     }
   }
 
@@ -175,8 +187,8 @@ export function WorkoutSummary() {
         {message ? <p className="form-message" role="status">{message}</p> : null}
         <div className="summary-actions">
           {editing ? (
-            <><button className="primary-button" onClick={saveCorrections} type="button">Save Corrections</button><button className="secondary-button" onClick={() => { setEditing(false); setDraft(null); }} type="button">Cancel</button></>
-          ) : <button className="secondary-button" onClick={beginEditing} type="button">Correct Workout</button>}
+            <><button className="primary-button" onClick={saveUpdates} type="button">Save Updates</button><button className="secondary-button" onClick={() => { setEditing(false); setDraft(null); }} type="button">Cancel</button></>
+          ) : <button className="secondary-button" onClick={beginEditing} type="button">Edit Workout</button>}
           {session.templateSequence === program.workoutsPerWeek ? <Link className="weekly-review-link" href={`/check-in?week=${session.programWeek}`}>Complete Week {session.programWeek} Review</Link> : null}
           <Link className="primary-link" href="/">Return to Today</Link>
         </div>

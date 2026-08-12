@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(48);
+select plan(50);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -252,6 +252,11 @@ select lives_ok(
   $$select public.swap_upcoming_workouts((public.get_upcoming_workout_queue(5)->0->>'scheduledWorkoutId')::uuid, (public.get_upcoming_workout_queue(5)->1->>'scheduledWorkoutId')::uuid)$$,
   'owner can swap two upcoming workouts'
 );
+select lives_ok(
+  $$select public.insert_rest_day_before_workout((public.get_upcoming_workout_queue(5)->0->>'scheduledWorkoutId')::uuid)$$,
+  'owner can add a rest day before the next workout'
+);
+select is((public.get_upcoming_workout_queue(5)->0->>'restDaysBefore')::integer, 1, 'the upcoming queue exposes the inserted rest day');
 
 select * from finish();
 rollback;
