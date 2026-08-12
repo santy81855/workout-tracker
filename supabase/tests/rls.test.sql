@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(40);
+select plan(41);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -233,6 +233,11 @@ select lives_ok(
 select is((select count(*)::integer from public.program_cycles where status = 'abandoned'), 1, 'removed plans are retained as abandoned records');
 select is(jsonb_array_length(public.get_program_library()), 1, 'removed plans disappear from the plan library');
 select ok((select count(*) from public.workout_sessions) > 0, 'removing a plan preserves its workout history');
+
+select lives_ok(
+  $$select public.activate_program_cycle((select source_json from public.program_revisions order by created_at limit 1), '2026-11-04')$$,
+  'a program cycle can start on a non-Monday date'
+);
 
 select * from finish();
 rollback;
