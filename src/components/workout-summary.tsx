@@ -64,6 +64,7 @@ export function WorkoutSummary() {
   async function saveCorrections() {
     if (!draft) return;
     try {
+      if (!performedDate) throw new Error("Choose a valid workout date.");
       let correctedDraft = draft;
       if (performedDate && performedDate !== localDateValue(session?.startedAt ?? draft.startedAt)) {
         const { data, error } = await createSupabaseBrowserClient().rpc("correct_workout_performed_date", { p_session_id: draft.id, p_performed_date: performedDate });
@@ -78,8 +79,8 @@ export function WorkoutSummary() {
       setEditing(false);
       setMessage("Corrections saved on this device and queued to sync.");
       void flushWorkoutOutbox();
-    } catch {
-      setMessage("The corrections could not be saved. Review the values and try again.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The corrections could not be saved. Review the values and try again.");
     }
   }
 

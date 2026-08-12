@@ -936,9 +936,8 @@ h2 {
 .exercise-muscle-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: .8rem 0 .35rem; }
 .exercise-muscle-chips span { padding: .3rem .5rem; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, var(--background)); color: var(--accent-strong); font-size: .64rem; font-weight: 800; }
 .exercise-muscle-chips span.secondary { background: var(--background); color: var(--muted); }
-.set-progress-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: .65rem 0 .2rem; }
-.set-progress-heading span { font-size: .72rem; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; }
-.set-progress-heading small { color: var(--muted); font-size: .68rem; }
+.set-progress-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin: .8rem 0 1.25rem; }
+.set-progress-row > span { flex: none; font-size: .72rem; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; }
 
 .more-button {
   flex: none;
@@ -1032,8 +1031,9 @@ h2 {
 
 .set-progress {
   display: flex;
+  justify-content: flex-end;
   gap: 0.55rem;
-  margin: 1.25rem 0;
+  margin: 0;
 }
 
 .set-dot {
@@ -1522,6 +1522,8 @@ h2 {
   display: grid;
   gap: 0.75rem;
 }
+.sync-panel .primary-button { width: 100%; }
+.sync-message { margin: .75rem 0 0; color: var(--text); font-size: .78rem; line-height: 1.5; }
 
 .exercise-stat-list {
   display: grid;
@@ -1794,7 +1796,7 @@ h2 {
 .calendar-day,.calendar-empty { min-height: 3.1rem; padding: .3rem; border-radius: .6rem; background: var(--background); font-size: .7rem; }
 .calendar-day { display: flex; flex-wrap: wrap; align-content: flex-start; gap: .2rem; }
 .calendar-day > span { width: 100%; }
-.calendar-day > a { width: .55rem; height: .55rem; border-radius: 999px; background: var(--accent); }
+.calendar-day > a { width: .55rem; height: .55rem; border-radius: 999px; background: var(--workout-color, var(--accent)); }
 .calendar-day-trained { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent); }
 
 .exercise-chart-section svg { width: 100%; height: 12rem; margin-top: 1rem; overflow: visible; border-bottom: 1px solid var(--border); background: linear-gradient(to bottom, transparent 24%, var(--border) 25%, transparent 26%, transparent 49%, var(--border) 50%, transparent 51%, transparent 74%, var(--border) 75%, transparent 76%); }

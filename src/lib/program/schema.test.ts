@@ -9,6 +9,16 @@ describe("program document", () => {
     expect(program.schemaVersion).toBe("1.0");
     expect(program.weekRules).toHaveLength(12);
     expect(program.workoutTemplates).toHaveLength(5);
+    expect(program.workoutTemplates.every((template) => /^#[0-9A-F]{6}$/i.test(template.color))).toBe(true);
+  });
+
+  it("adds stable workout colors to older documents", () => {
+    const legacy = structuredClone(programJson) as unknown as Record<string, unknown>;
+    const templates = legacy.workoutTemplates as Array<Record<string, unknown>>;
+    for (const template of templates) delete template.color;
+    expect(programDocumentSchema.parse(legacy).workoutTemplates.map((template) => template.color)).toEqual([
+      "#2563EB", "#DC2626", "#16A34A", "#9333EA", "#EA580C",
+    ]);
   });
 
   it("expands to sixty scheduled workout instances", () => {

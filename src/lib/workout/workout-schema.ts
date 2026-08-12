@@ -50,6 +50,7 @@ export const activeWorkoutSessionSchema = z.object({
   templateSequence: z.number().int().min(1).max(7).default(1),
   phase: z.string().min(1),
   templateName: z.string().min(1),
+  templateColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#2563EB"),
   targetRirLabel: z.string().min(1),
   startedAt: z.string().datetime(),
   finishedAt: z.string().datetime().nullable().default(null),

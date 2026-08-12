@@ -35,6 +35,7 @@ export function createInitialSession(
     templateSequence,
     phase: weekRule.phase,
     templateName: template.name,
+    templateColor: template.color,
     targetRirLabel: formatRir(weekRule.targetRir.min, weekRule.targetRir.max),
     startedAt: timestamp,
     finishedAt: null,
