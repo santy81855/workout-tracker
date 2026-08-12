@@ -51,6 +51,16 @@ describe("program scheduling", () => {
     expect(rolled[0].rolloverCount).toBe(1);
   });
 
+  it("rotates six templates through a five-workout weekly cadence", () => {
+    const rollingDocument = structuredClone(programJson);
+    rollingDocument.workoutTemplates.push({ ...structuredClone(rollingDocument.workoutTemplates[0]), sequence: 6, originalDayLabel: "Rolling 6", name: "Legs B" });
+    const rolling = programDocumentSchema.parse(rollingDocument);
+    const workouts = generateScheduledWorkouts(rolling, "2026-08-10");
+    expect(workouts).toHaveLength(60);
+    expect(workouts.slice(0, 8).map((workout) => workout.templateSequence)).toEqual([1, 2, 3, 4, 5, 6, 1, 2]);
+    expect(workouts[5]).toMatchObject({ programWeek: 2, originalScheduledDate: "2026-08-17" });
+  });
+
   it("allows rollover onto both weekend days", () => {
     const workouts = generateScheduledWorkouts(program, "2026-08-10");
 

@@ -95,6 +95,7 @@ export const programDocumentSchema = z
     description: z.string().trim().min(1).max(1000),
     weekCount: z.number().int().min(1).max(52),
     workoutsPerWeek: z.number().int().min(1).max(7),
+    trainingDaysPerWeek: z.number().int().min(1).max(7).optional(),
     defaultIncrementTenthsLb: z.number().int().positive(),
     muscleGroups: z.array(slugSchema).min(1),
     exercises: z.array(exerciseDefinitionSchema).min(1),
@@ -109,9 +110,6 @@ export const programDocumentSchema = z
 
     if (program.weekRules.length !== program.weekCount) {
       context.addIssue({ code: "custom", path: ["weekRules"], message: `Expected exactly ${program.weekCount} week rules` });
-    }
-    if (program.workoutTemplates.length !== program.workoutsPerWeek) {
-      context.addIssue({ code: "custom", path: ["workoutTemplates"], message: `Expected exactly ${program.workoutsPerWeek} workout templates` });
     }
 
     if (exerciseSlugs.size !== program.exercises.length) {
@@ -128,7 +126,7 @@ export const programDocumentSchema = z
       }
     }
 
-    for (let sequence = 1; sequence <= program.workoutsPerWeek; sequence += 1) {
+    for (let sequence = 1; sequence <= program.workoutTemplates.length; sequence += 1) {
       if (!templateSequences.has(sequence)) {
         context.addIssue({
           code: "custom",
@@ -168,6 +166,7 @@ export const programDocumentSchema = z
         }
       }
     }
-  });
+  })
+  .transform((program) => program.trainingDaysPerWeek === undefined ? program : { ...program, workoutsPerWeek: program.trainingDaysPerWeek });
 
 export type ProgramDocument = z.infer<typeof programDocumentSchema>;

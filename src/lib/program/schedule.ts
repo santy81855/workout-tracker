@@ -45,10 +45,11 @@ export function generateScheduledWorkouts(
 ): ScheduledWorkoutDraft[] {
   parseLocalDate(cycleStartDate);
 
-  return Array.from({ length: program.weekCount }, (_, weekIndex) =>
-    program.workoutTemplates.map((template) => {
-      const sequenceInCycle = weekIndex * program.workoutsPerWeek + template.sequence;
-      const scheduledDate = addLocalDays(cycleStartDate, weekIndex * 7 + template.sequence - 1);
+  return Array.from({ length: program.weekCount * program.workoutsPerWeek }, (_, index) => {
+      const sequenceInCycle = index + 1;
+      const weekIndex = Math.floor(index / program.workoutsPerWeek);
+      const template = program.workoutTemplates[index % program.workoutTemplates.length];
+      const scheduledDate = addLocalDays(cycleStartDate, weekIndex * 7 + (index % program.workoutsPerWeek));
 
       return {
         sequenceInCycle,
@@ -60,8 +61,7 @@ export function generateScheduledWorkouts(
         rolloverCount: 0,
         status: "queued" as const,
       };
-    }),
-  ).flat();
+    });
 }
 
 export function rollUnresolvedWorkoutsForward<T extends ScheduledWorkoutDraft>(

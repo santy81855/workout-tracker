@@ -13,6 +13,7 @@ export function createInitialSession(
   now = new Date(),
   program: ProgramDocument = defaultProgram,
   cycleStartsOn = "2026-08-10",
+  sequenceInCycle = (programWeek - 1) * program.workoutsPerWeek + templateSequence,
 ): ActiveWorkoutSession {
   const template = program.workoutTemplates.find((candidate) => candidate.sequence === templateSequence);
   if (!template) throw new Error(`Unknown workout template sequence ${templateSequence}`);
@@ -29,7 +30,7 @@ export function createInitialSession(
     status: "active",
     programSlug: program.slug,
     cycleStartsOn,
-    sequenceInCycle: (programWeek - 1) * program.workoutsPerWeek + templateSequence,
+    sequenceInCycle,
     programWeek,
     templateSequence,
     phase: weekRule.phase,

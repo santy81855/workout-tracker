@@ -53,4 +53,12 @@ describe("program document", () => {
     flexible.workoutTemplates.push({ ...structuredClone(flexible.workoutTemplates[0]), sequence: 6, originalDayLabel: "Saturday", name: "Sixth Day" });
     expect(programDocumentSchema.safeParse(flexible).success).toBe(true);
   });
+
+  it("accepts a rolling template rotation larger than weekly training frequency", () => {
+    const rolling = structuredClone(programJson);
+    rolling.slug = "rolling-six-template-plan";
+    rolling.workoutTemplates.push({ ...structuredClone(rolling.workoutTemplates[0]), sequence: 6, originalDayLabel: "Rolling Session 6", name: "Legs B" });
+    expect(rolling.workoutsPerWeek).toBe(5);
+    expect(programDocumentSchema.safeParse(rolling).success).toBe(true);
+  });
 });
