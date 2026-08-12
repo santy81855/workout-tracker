@@ -10,5 +10,6 @@ export interface WorkoutRepository {
   markSessionConflict(sessionId: string, expectedUpdatedAt: string): Promise<void>;
   acceptRemoteSession(session: ActiveWorkoutSession): Promise<void>;
   clearActiveSession(): Promise<void>;
+  deleteSession(sessionId: string): Promise<void>;
   clearAllData(): Promise<void>;
 }

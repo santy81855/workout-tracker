@@ -116,6 +116,14 @@ export class IndexedDbWorkoutRepository implements WorkoutRepository {
     await transaction.done;
   }
 
+  async deleteSession(sessionId: string): Promise<void> {
+    const db = await database();
+    const transaction = db.transaction(["sessions", "outbox"], "readwrite");
+    await transaction.objectStore("sessions").delete(sessionId);
+    await transaction.objectStore("outbox").delete(`session:${sessionId}`);
+    await transaction.done;
+  }
+
   async clearAllData(): Promise<void> {
     const db = await database();
     const transaction = db.transaction(["sessions", "outbox"], "readwrite");
