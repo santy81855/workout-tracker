@@ -11,12 +11,14 @@ import type { ActiveWorkoutSession } from "@/lib/workout/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PlanLibrary } from "@/components/plan-library";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface NextWorkout {
   sequenceInCycle: number;
   programWeek: ProgramWeek;
   templateSequence: number;
 }
+interface QueuedWorkout extends NextWorkout { scheduledWorkoutId: string; templateName: string; scheduledDate: string }
 
 export function TodayDashboard() {
   const router = useRouter();
@@ -28,11 +30,13 @@ export function TodayDashboard() {
   const [cycleComplete, setCycleComplete] = useState(false);
   const [availableSessions, setAvailableSessions] = useState<ActiveWorkoutSession[]>([]);
   const [nextWorkout, setNextWorkout] = useState<NextWorkout>({ sequenceInCycle: 1, programWeek: 1, templateSequence: 1 });
+  const [upcomingQueue, setUpcomingQueue] = useState<QueuedWorkout[]>([]);
+  const [reordering, setReordering] = useState(false);
 
   useEffect(() => {
     void flushWorkoutOutbox();
-    Promise.all([workoutRepository.getActiveSession(), listAvailableSessions()])
-      .then(([active, sessions]) => {
+    Promise.all([workoutRepository.getActiveSession(), listAvailableSessions(), createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: 5 })])
+      .then(([active, sessions, queueResult]) => {
         const cycleSessions = sessions.filter((session) => session.programSlug === program.slug && session.cycleStartsOn === cycleStartsOn);
         const cycleActive = active?.programSlug === program.slug && active.cycleStartsOn === cycleStartsOn ? active : null;
         setActiveSession(cycleActive);
@@ -46,11 +50,14 @@ export function TodayDashboard() {
         const totalSessions = program.weekCount * program.workoutsPerWeek;
         setCycleComplete(!active && highestResolvedSequence >= totalSessions);
         const sequenceInCycle = Math.min(totalSessions, highestResolvedSequence + 1);
-        setNextWorkout({
+        const fallbackNext = {
           sequenceInCycle,
           programWeek: Math.ceil(sequenceInCycle / program.workoutsPerWeek) as ProgramWeek,
           templateSequence: ((sequenceInCycle - 1) % program.workoutTemplates.length) + 1,
-        });
+        };
+        const queue = queueResult.error ? [] : (queueResult.data as QueuedWorkout[] | null) ?? [];
+        setUpcomingQueue(queue);
+        setNextWorkout(queue[0] ?? fallbackNext);
       })
       .catch(() => setError("The locally saved workout could not be loaded."))
       .finally(() => setLoading(false));
@@ -68,6 +75,20 @@ export function TodayDashboard() {
     } catch {
       setError("The workout could not be saved on this device.");
     }
+  }
+
+  async function moveQueuedWorkout(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (activeSession || reordering || target < 0 || target >= upcomingQueue.length) return;
+    setReordering(true); setError(null);
+    const first = upcomingQueue[index]; const second = upcomingQueue[target];
+    const { error: swapError } = await createSupabaseBrowserClient().rpc("swap_upcoming_workouts", { p_first_id: first.scheduledWorkoutId, p_second_id: second.scheduledWorkoutId });
+    if (swapError) { setError("The upcoming workouts could not be reordered. Check your connection and try again."); setReordering(false); return; }
+    const queue = [...upcomingQueue];
+    const firstContent = { templateSequence: first.templateSequence, templateName: first.templateName };
+    queue[index] = { ...first, templateSequence: second.templateSequence, templateName: second.templateName };
+    queue[target] = { ...second, ...firstContent };
+    setUpcomingQueue(queue); setNextWorkout(queue[0]); setReordering(false);
   }
 
   const displayedSession = activeSession;
@@ -114,6 +135,8 @@ export function TodayDashboard() {
       </p>
       {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
     </section>
+
+    {upcomingQueue.length > 1 ? <section className="section-block upcoming-workout-queue" aria-labelledby="upcoming-workouts-title"><div className="section-heading"><div><p className="eyebrow">Flexible order</p><h2 id="upcoming-workouts-title">Upcoming workouts</h2></div></div><p className="muted-copy">Move a workout earlier or later when recovery or equipment changes your plan.</p><ol>{upcomingQueue.map((queued, index) => <li key={queued.scheduledWorkoutId}><span>{index + 1}</span><div><strong>{queued.templateName}</strong><small>Week {queued.programWeek} · {new Date(`${queued.scheduledDate}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</small></div><div><button aria-label={`Move ${queued.templateName} earlier`} disabled={activeSession !== null || reordering || index === 0} onClick={() => void moveQueuedWorkout(index, -1)} type="button">↑</button><button aria-label={`Move ${queued.templateName} later`} disabled={activeSession !== null || reordering || index === upcomingQueue.length - 1} onClick={() => void moveQueuedWorkout(index, 1)} type="button">↓</button></div></li>)}</ol>{activeSession ? <p className="helper-text">Finish or cancel the active workout before changing the queue.</p> : null}</section> : null}
 
     <section className="section-block" aria-labelledby="program-status-title">
       <div className="section-heading">

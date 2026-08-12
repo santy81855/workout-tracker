@@ -7,6 +7,7 @@ import { getRemoteSession, listAvailableSessions } from "@/lib/workout/history";
 import { findPreviousExercise, formatPreviousSets } from "@/lib/workout/previous-performance";
 import { flushWorkoutOutbox, syncWorkoutSession, WorkoutSyncConflictError } from "@/lib/workout/sync";
 import type { ActiveWorkoutSession, WorkoutSetDraft } from "@/lib/workout/types";
+import type { ProgramDocument } from "@/lib/program/schema";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
@@ -23,6 +24,8 @@ function timerLabel(remainingSeconds: number): string {
   const seconds = remainingSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
+
+type LibraryExercise = ProgramDocument["exercises"][number] & { isCustom?: boolean };
 
 function muscleLabel(slug: string) {
   return slug.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
@@ -45,6 +48,14 @@ export function ActiveWorkout() {
   const [recordCelebration, setRecordCelebration] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [repInputs, setRepInputs] = useState<Record<string, string>>({});
+  const [showAddExercise, setShowAddExercise] = useState(false);
+  const [addedExerciseSlug, setAddedExerciseSlug] = useState("");
+  const [addedExerciseSets, setAddedExerciseSets] = useState(1);
+  const [exerciseLibrary, setExerciseLibrary] = useState<LibraryExercise[]>(program.exercises);
+  const [showCustomExercise, setShowCustomExercise] = useState(false);
+  const [customExercise, setCustomExercise] = useState({ name: "", equipment: "", loadBasis: "external_total", incrementLb: "2.5", restSeconds: "120", primaryMuscle: program.muscleGroups[0] ?? "" });
+  const [creatingExercise, setCreatingExercise] = useState(false);
   const syncTimer = useRef<number | null>(null);
   const cancelPanel = useRef<HTMLElement | null>(null);
 
@@ -57,6 +68,7 @@ export function ActiveWorkout() {
       })
       .catch(() => setError("The active workout could not be restored."));
     void listAvailableSessions().then(setHistory);
+    void createSupabaseBrowserClient().rpc("get_exercise_library").then(({ data }) => { if (data) setExerciseLibrary(data as LibraryExercise[]); });
   }, []);
 
   useEffect(() => {
@@ -188,7 +200,14 @@ export function ActiveWorkout() {
   }
 
   function confirmRir(onTarget: boolean, actualRir: WorkoutSetDraft["actualRir"] = null) {
-    updateActiveSet((set) => ({ ...set, status: "completed", rirOnTarget: onTarget, actualRir }));
+    if (!session || !exercise || !activeSet || activeSetIndex < 0) return;
+    const exercises = [...session.exercises];
+    const sets = [...exercise.sets];
+    sets[activeSetIndex] = { ...activeSet, status: "completed", rirOnTarget: onTarget, actualRir };
+    const nextSetIndex = sets.findIndex((set, index) => index > activeSetIndex && set.status === "draft");
+    if (nextSetIndex >= 0) sets[nextSetIndex] = { ...sets[nextSetIndex], loadMode: activeSet.loadMode, loadTenthsLb: activeSet.loadTenthsLb };
+    exercises[session.activeExerciseIndex] = { ...exercise, sets };
+    void commit({ ...session, exercises });
   }
 
   function moveUpcomingExercise(index: number, direction: -1 | 1) {
@@ -263,6 +282,40 @@ export function ActiveWorkout() {
     };
     setShowReplacements(false);
     void commit({ ...session, exercises });
+  }
+
+  function addExerciseToSession() {
+    if (!session || !addedExerciseSlug) return;
+    const definition = exerciseLibrary.find((candidate) => candidate.slug === addedExerciseSlug);
+    if (!definition) return;
+    const prescription = program.workoutTemplates.flatMap((template) => template.exercises).find((candidate) => candidate.exercise === definition.slug);
+    const repMin = prescription?.repMin ?? 8;
+    const repMax = prescription?.repMax ?? 15;
+    const loadMode = definition.loadBasis;
+    const added = {
+      id: crypto.randomUUID(), prescribedExerciseSlug: definition.slug, performedExerciseSlug: definition.slug,
+      replacementReason: null, name: definition.name, repMin, repMax, targetRirLabel: session.targetRirLabel,
+      loadBasis: definition.loadBasis, incrementTenthsLb: prescription?.incrementTenthsLb ?? definition.defaultIncrementTenthsLb,
+      restSeconds: prescription?.restSeconds ?? definition.defaultRestSeconds, notes: "",
+      sets: Array.from({ length: addedExerciseSets }, (_, index) => ({ id: crypto.randomUUID(), setNumber: index + 1, status: "draft" as const, loadMode, loadTenthsLb: null, reps: repMin, rirOnTarget: null, actualRir: null, completedAt: null })),
+    };
+    void commit({ ...session, exercises: [...session.exercises, added] });
+    setShowAddExercise(false); setAddedExerciseSlug(""); setAddedExerciseSets(1);
+  }
+
+  async function createCustomExercise() {
+    if (!customExercise.name.trim() || !customExercise.equipment.trim() || !customExercise.primaryMuscle) return;
+    setCreatingExercise(true); setError(null);
+    const { data, error: createError } = await createSupabaseBrowserClient().rpc("create_custom_exercise", {
+      p_name: customExercise.name.trim(), p_equipment: customExercise.equipment.trim(), p_load_basis: customExercise.loadBasis,
+      p_increment_tenths_lb: Math.max(1, Math.round(Number(customExercise.incrementLb) * 10)),
+      p_rest_seconds: Math.max(30, Math.min(600, Math.round(Number(customExercise.restSeconds)))), p_primary_muscle: customExercise.primaryMuscle,
+    });
+    if (createError) { setError(createError.message); setCreatingExercise(false); return; }
+    const created = data as LibraryExercise;
+    setExerciseLibrary((current) => [...current, created].sort((left, right) => left.name.localeCompare(right.name)));
+    setAddedExerciseSlug(created.slug); setShowCustomExercise(false); setCreatingExercise(false);
+    setCustomExercise({ name: "", equipment: "", loadBasis: "external_total", incrementLb: "2.5", restSeconds: "120", primaryMuscle: program.muscleGroups[0] ?? "" });
   }
 
   function addRestTime(seconds: number) {
@@ -425,14 +478,10 @@ export function ActiveWorkout() {
             <p className="muted-copy">{exercise.repMin}–{exercise.repMax} reps · {exercise.sets.length} working {exercise.sets.length === 1 ? "set" : "sets"}</p>
             <div className="exercise-muscle-chips" aria-label="Muscles trained">{performedDefinition?.muscles.map((muscle) => <span className={muscle.contribution === .5 ? "secondary" : ""} key={muscle.muscle}>{muscleLabel(muscle.muscle)}{muscle.contribution === .5 ? " · secondary" : ""}</span>)}</div>
           </div>
-          <button
-            className="replace-button"
-            disabled={!canReplace}
-            onClick={() => setShowReplacements((visible) => !visible)}
-            type="button"
-          >
-            Replace
-          </button>
+          <div className="exercise-heading-actions">
+            <button className="replace-button" disabled={!canReplace} onClick={() => setShowReplacements((visible) => !visible)} type="button">Replace</button>
+            {!exerciseComplete && !confirmSkipExercise ? <button className="replace-button skip-exercise-button" onClick={() => setConfirmSkipExercise(true)} type="button">Skip</button> : null}
+          </div>
         </div>
 
         {showReplacements ? (
@@ -450,6 +499,7 @@ export function ActiveWorkout() {
           </div>
         ) : null}
 
+        <div className="set-progress-heading"><span>Set</span></div>
         <div className="set-progress" aria-label="Set progress">
           {exercise.sets.map((set, index) => (
             <button
@@ -530,22 +580,27 @@ export function ActiveWorkout() {
 
             <div className="control-label"><span>Reps</span><small>Target {exercise.repMin}–{exercise.repMax}</small></div>
             <div className="stepper-row">
-              <button aria-label="Decrease repetitions by one" onClick={() => updateActiveSet((set) => ({ ...set, reps: Math.max(1, set.reps - 1) }))} type="button">−1</button>
+              <button aria-label="Decrease repetitions by one" onClick={() => { setRepInputs((values) => { const next = { ...values }; delete next[activeSet.id]; return next; }); updateActiveSet((set) => ({ ...set, reps: Math.max(1, set.reps - 1) })); }} type="button">−1</button>
               <label className="exact-value">
                 <span className="sr-only">Exact repetitions</span>
                 <input
                   inputMode="numeric"
                   min="1"
                   onChange={(event) => {
-                    const reps = Number.parseInt(event.target.value, 10);
+                    const value = event.target.value;
+                    if (!/^\d*$/.test(value)) return;
+                    setRepInputs((values) => ({ ...values, [activeSet.id]: value }));
+                    const reps = Number.parseInt(value, 10);
                     if (Number.isInteger(reps) && reps > 0) updateActiveSet((set) => ({ ...set, reps }));
                   }}
-                  type="number"
-                  value={activeSet.reps}
+                  onBlur={() => setRepInputs((values) => { const next = { ...values }; delete next[activeSet.id]; return next; })}
+                  pattern="[0-9]*"
+                  type="text"
+                  value={repInputs[activeSet.id] ?? activeSet.reps}
                 />
                 <small>reps</small>
               </label>
-              <button aria-label="Increase repetitions by one" onClick={() => updateActiveSet((set) => ({ ...set, reps: set.reps + 1 }))} type="button">+1</button>
+              <button aria-label="Increase repetitions by one" onClick={() => { setRepInputs((values) => { const next = { ...values }; delete next[activeSet.id]; return next; }); updateActiveSet((set) => ({ ...set, reps: set.reps + 1 })); }} type="button">+1</button>
             </div>
 
             <button className="primary-button complete-set-button" onClick={completeSet} type="button">Complete Set {activeSet.setNumber}</button>
@@ -584,7 +639,6 @@ export function ActiveWorkout() {
           {editingNote ? <div className="exercise-note-editor"><label><span className="sr-only">Note for {exercise.name}</span><textarea autoFocus onFocus={(event) => event.currentTarget.setSelectionRange(event.currentTarget.value.length, event.currentTarget.value.length)} onChange={(event) => setNoteDraft(event.target.value)} placeholder="Setup cue, seat position, technique reminder…" value={noteDraft} /></label><div className="exercise-note-actions"><button onClick={() => { setNoteDraft(exercise.notes); setEditingNoteId(null); }} type="button">Cancel</button><button className="primary-button" onClick={() => { const exercises = [...session.exercises]; exercises[session.activeExerciseIndex] = { ...exercise, notes: noteDraft.trim() }; void commit({ ...session, exercises }); setEditingNoteId(null); }} type="button">Save note</button></div></div> : null}
         </div>
 
-        {!exerciseComplete && !confirmSkipExercise ? <button className="skip-exercise-trigger" onClick={() => setConfirmSkipExercise(true)} type="button">Skip This Exercise</button> : null}
         {confirmSkipExercise ? <div className="skip-exercise-panel" role="alertdialog" aria-label={`Skip ${exercise.name}?`}><strong>Skip the remaining sets?</strong><p>Completed sets will stay saved. Skipped sets won’t count toward volume or progression.</p><label>Reason <span>Optional</span><select onChange={(event) => setSkipReason(event.target.value)} value={skipReason}><option value="">No reason</option><option value="time">Short on time</option><option value="fatigue">Fatigue or recovery</option><option value="equipment">Equipment unavailable</option><option value="preference">Don’t want to do it today</option></select></label><div><button onClick={() => { setConfirmSkipExercise(false); setSkipReason(""); }} type="button">Keep Exercise</button><button className="danger-button" onClick={skipExercise} type="button">Skip Exercise</button></div></div> : null}
 
         {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
@@ -611,6 +665,7 @@ export function ActiveWorkout() {
           })}
         </ol>
         {isLastExercise ? <p className="muted-copy">This is your final exercise.</p> : null}
+        {!showAddExercise ? <button className="add-session-exercise-trigger" onClick={() => setShowAddExercise(true)} type="button">+ Add Exercise</button> : <div className="add-session-exercise-panel"><div><strong>Add to this workout</strong><button aria-label="Close add exercise panel" onClick={() => { setShowAddExercise(false); setAddedExerciseSlug(""); setShowCustomExercise(false); }} type="button">×</button></div><label>Exercise<select onChange={(event) => setAddedExerciseSlug(event.target.value)} value={addedExerciseSlug}><option value="">Choose an exercise</option>{exerciseLibrary.filter((candidate) => !session.exercises.some((item) => item.performedExerciseSlug === candidate.slug)).map((candidate) => <option key={candidate.slug} value={candidate.slug}>{candidate.name}{candidate.isCustom ? " · Custom" : ""}</option>)}</select></label><button className="custom-exercise-toggle" onClick={() => setShowCustomExercise((shown) => !shown)} type="button">{showCustomExercise ? "Cancel custom exercise" : "+ Create custom exercise"}</button>{showCustomExercise ? <div className="custom-exercise-fields"><label>Name<input maxLength={120} onChange={(event) => setCustomExercise({ ...customExercise, name: event.target.value })} value={customExercise.name} /></label><label>Equipment<input maxLength={80} onChange={(event) => setCustomExercise({ ...customExercise, equipment: event.target.value })} placeholder="Cable, machine, dumbbell…" value={customExercise.equipment} /></label><label>Load entry<select onChange={(event) => setCustomExercise({ ...customExercise, loadBasis: event.target.value })} value={customExercise.loadBasis}><option value="external_total">Total weight</option><option value="per_dumbbell">Per dumbbell</option><option value="added_bodyweight">Added bodyweight</option><option value="bodyweight_only">Bodyweight only</option><option value="repetition_only">Reps only</option></select></label><label>Primary muscle<select onChange={(event) => setCustomExercise({ ...customExercise, primaryMuscle: event.target.value })} value={customExercise.primaryMuscle}>{program.muscleGroups.map((muscle) => <option key={muscle} value={muscle}>{muscleLabel(muscle)}</option>)}</select></label><label>Increment (lb)<input inputMode="decimal" min="0.1" onChange={(event) => setCustomExercise({ ...customExercise, incrementLb: event.target.value })} type="number" value={customExercise.incrementLb} /></label><label>Rest (seconds)<input inputMode="numeric" max="600" min="30" onChange={(event) => setCustomExercise({ ...customExercise, restSeconds: event.target.value })} type="number" value={customExercise.restSeconds} /></label><button className="secondary-button" disabled={creatingExercise || !customExercise.name.trim() || !customExercise.equipment.trim()} onClick={() => void createCustomExercise()} type="button">{creatingExercise ? "Creating…" : "Save Custom Exercise"}</button></div> : null}<label>Working sets<select onChange={(event) => setAddedExerciseSets(Number(event.target.value))} value={addedExerciseSets}>{[1,2,3,4].map((count) => <option key={count} value={count}>{count}</option>)}</select></label><button className="primary-button" disabled={!addedExerciseSlug} onClick={addExerciseToSession} type="button">Add to Itinerary</button><p>This changes today’s workout only.</p></div>}
       </section>
     </main>
   );
