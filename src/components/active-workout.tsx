@@ -488,9 +488,11 @@ export function ActiveWorkout() {
           </div>
           <div className="exercise-heading-actions">
             <button className="replace-button" disabled={!canReplace} onClick={() => setShowReplacements((visible) => !visible)} type="button">Replace</button>
-            {!exerciseComplete && !confirmSkipExercise ? <button className="replace-button skip-exercise-button" onClick={() => setConfirmSkipExercise(true)} type="button">Skip</button> : null}
+            {!exerciseComplete ? <button className="replace-button skip-exercise-button" disabled={confirmSkipExercise} onClick={() => setConfirmSkipExercise(true)} type="button">Skip</button> : null}
           </div>
         </div>
+
+        {confirmSkipExercise ? <div className="skip-exercise-panel skip-exercise-panel-inline" role="alertdialog" aria-label={`Skip ${exercise.name}?`}><strong>Skip the remaining sets?</strong><p>Completed sets will stay saved. Skipped sets won’t count toward volume or progression.</p><label>Reason <span>Optional</span><select onChange={(event) => setSkipReason(event.target.value)} value={skipReason}><option value="">No reason</option><option value="time">Short on time</option><option value="fatigue">Fatigue or recovery</option><option value="equipment">Equipment unavailable</option><option value="preference">Don’t want to do it today</option></select></label><div><button onClick={() => { setConfirmSkipExercise(false); setSkipReason(""); }} type="button">Keep Exercise</button><button className="danger-button" onClick={skipExercise} type="button">Skip Exercise</button></div></div> : null}
 
         {showReplacements ? (
           <div className="replacement-panel">
@@ -645,8 +647,6 @@ export function ActiveWorkout() {
           {exercise.notes && !editingNote ? <p className="exercise-note-display">{exercise.notes}</p> : null}
           {editingNote ? <div className="exercise-note-editor"><label><span className="sr-only">Note for {exercise.name}</span><textarea autoFocus onFocus={(event) => event.currentTarget.setSelectionRange(event.currentTarget.value.length, event.currentTarget.value.length)} onChange={(event) => setNoteDraft(event.target.value)} placeholder="Setup cue, seat position, technique reminder…" value={noteDraft} /></label><div className="exercise-note-actions"><button onClick={() => { setNoteDraft(exercise.notes); setEditingNoteId(null); }} type="button">Cancel</button><button className="primary-button" onClick={() => { const exercises = [...session.exercises]; exercises[session.activeExerciseIndex] = { ...exercise, notes: noteDraft.trim() }; void commit({ ...session, exercises }); setEditingNoteId(null); }} type="button">Save note</button></div></div> : null}
         </div>
-
-        {confirmSkipExercise ? <div className="skip-exercise-panel" role="alertdialog" aria-label={`Skip ${exercise.name}?`}><strong>Skip the remaining sets?</strong><p>Completed sets will stay saved. Skipped sets won’t count toward volume or progression.</p><label>Reason <span>Optional</span><select onChange={(event) => setSkipReason(event.target.value)} value={skipReason}><option value="">No reason</option><option value="time">Short on time</option><option value="fatigue">Fatigue or recovery</option><option value="equipment">Equipment unavailable</option><option value="preference">Don’t want to do it today</option></select></label><div><button onClick={() => { setConfirmSkipExercise(false); setSkipReason(""); }} type="button">Keep Exercise</button><button className="danger-button" onClick={skipExercise} type="button">Skip Exercise</button></div></div> : null}
 
         {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
         {!confirmCancel ? <button className="cancel-workout-trigger" onClick={() => { setConfirmCancel(true); window.requestAnimationFrame(() => { window.scrollTo({ top: 0, behavior: "smooth" }); cancelPanel.current?.focus(); }); }} type="button">Cancel Workout</button> : null}
