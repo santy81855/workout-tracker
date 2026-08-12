@@ -80,13 +80,18 @@ export function ProgramBrowser() {
   function updateVisibleCard() {
     const node = carousel.current;
     if (!node || !cycles?.length) return;
-    const nextIndex = Math.max(0, Math.min(cycles.length - 1, Math.round(node.scrollLeft / node.clientWidth)));
+    const cards = Array.from(node.children) as HTMLElement[];
+    const nextIndex = cards.reduce((nearest, card, index) =>
+      Math.abs(card.offsetLeft - node.offsetLeft - node.scrollLeft) < Math.abs(cards[nearest].offsetLeft - node.offsetLeft - node.scrollLeft) ? index : nearest
+    , 0);
     setSelectedIndex(nextIndex);
     setConfirmRemove(false); setConfirmRestart(false); setMessage(null);
   }
 
   function scrollToPlan(index: number) {
-    carousel.current?.scrollTo({ left: index * (carousel.current?.clientWidth ?? 0), behavior: "smooth" });
+    const node = carousel.current;
+    const card = node?.children.item(index) as HTMLElement | null;
+    if (node && card) node.scrollTo({ left: card.offsetLeft - node.offsetLeft, behavior: "smooth" });
     setSelectedIndex(index);
   }
 
@@ -134,7 +139,7 @@ export function ProgramBrowser() {
   }
 
   return <>
-    <header className="topbar program-page-header"><div><p className="eyebrow">Training plans</p><h1>Program</h1></div><button className="plan-library-import-button" onClick={() => setShowImport((shown) => !shown)} type="button">{showImport ? "Close" : "Import"}</button></header>
+    <header className="topbar program-page-header"><div><p className="eyebrow">Training plans</p><h1>Program</h1></div><button className="plan-library-import-button" onClick={() => setShowImport((shown) => !shown)} type="button">{showImport ? "Close" : "+ Import"}</button></header>
     {showImport ? <ProgramImportPanel onComplete={() => { setShowImport(false); void loadLibrary(); }} /> : null}
 
     {cycles === null ? <section className="hero-card program-browser-loading" aria-busy="true">Loading your plans…</section> : cycles.length === 0 ? <PlanLibrary showStarter /> : <>
@@ -143,12 +148,6 @@ export function ProgramBrowser() {
           <span className={`library-status library-status-${selected?.status}`}>{selected ? cycleLabel(selected) : "Plan"}</span>
           <div><button onClick={exportSelected} type="button">Export</button><button className="library-remove-button" onClick={() => setConfirmRemove(true)} type="button">Remove</button></div>
         </div>
-        {selected?.status !== "active" ? <div className="program-switch-actions">
-          {selected?.status === "completed"
-            ? <button className="primary-button" disabled={pending !== null} onClick={() => setConfirmRestart(true)} type="button">Start new cycle</button>
-            : <button className="primary-button" disabled={pending !== null} onClick={() => void resume()} type="button">{pending === "resume" ? "Starting…" : selected?.completedSessions ? "Resume plan" : "Start plan"}</button>}
-          {selected?.status === "planned" && selected.completedSessions > 0 ? <button className="secondary-button" disabled={pending !== null} onClick={() => setConfirmRestart(true)} type="button">Restart from beginning</button> : null}
-        </div> : null}
         <div className="program-carousel" onScroll={updateVisibleCard} ref={carousel}>
           {cycles.map((cycle) => <article className="hero-card program-carousel-card" key={cycle.cycleId}>
             <p className="eyebrow">{cycleLabel(cycle)}</p><h2>{cycle.document.displayTitle ?? cycle.document.name}</h2>
@@ -159,6 +158,14 @@ export function ProgramBrowser() {
           </article>)}
         </div>
         <div className="program-carousel-dots" aria-label={`Plan ${selectedIndex + 1} of ${cycles.length}`}>{cycles.map((cycle, index) => <button aria-label={`Show ${cycle.document.displayTitle ?? cycle.document.name}`} aria-current={index === selectedIndex} key={cycle.cycleId} onClick={() => scrollToPlan(index)} type="button" />)}</div>
+        <div className="program-switch-actions" aria-live="polite">
+          {selected?.status === "active" ? <span className="active-plan-message">This is your current plan</span> : <>
+            {selected?.status === "completed"
+              ? <button className="primary-button" disabled={pending !== null} onClick={() => setConfirmRestart(true)} type="button">Start new cycle</button>
+              : <button className="primary-button" disabled={pending !== null} onClick={() => void resume()} type="button">{pending === "resume" ? "Starting…" : selected?.completedSessions ? "Resume plan" : "Start plan"}</button>}
+            {selected?.status === "planned" && selected.completedSessions > 0 ? <button className="secondary-button" disabled={pending !== null} onClick={() => setConfirmRestart(true)} type="button">Restart from beginning</button> : null}
+          </>}
+        </div>
         {confirmRestart && selected ? <div className="program-action-confirm" role="alertdialog"><strong>Restart {selected.document.displayTitle ?? selected.document.name}?</strong><p>Your previous workouts remain in History. A separate, fresh cycle will begin at workout one.</p><label>New cycle starts<input min={today()} onChange={(event) => setRestartDate(event.target.value)} type="date" value={restartDate} /></label><div><button onClick={() => setConfirmRestart(false)} type="button">Cancel</button><button className="primary-button" disabled={pending !== null} onClick={() => void restart()} type="button">{pending === "restart" ? "Restarting…" : "Start fresh cycle"}</button></div></div> : null}
         {confirmRemove && selected ? <div className="program-action-confirm" role="alertdialog"><strong>Remove this plan?</strong><p>Completed workout history is preserved, but the plan will leave this carousel.</p><div><button onClick={() => setConfirmRemove(false)} type="button">Keep plan</button><button className="danger-button" disabled={pending !== null} onClick={() => void remove()} type="button">{pending === "remove" ? "Removing…" : "Remove plan"}</button></div></div> : null}
         {message ? <p className="form-message action-error" role="alert">{message}</p> : null}

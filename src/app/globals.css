@@ -1999,9 +1999,10 @@ h2 {
 .program-carousel-actions > div, .program-switch-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .program-carousel-actions button { min-height: 2.5rem; padding: 0 .8rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); color: var(--foreground); font-weight: 800; }
 .program-carousel-actions .library-remove-button { color: #d84b4b; }
-.program-switch-actions { justify-content: flex-start; }
+.program-switch-actions { justify-content: flex-start; min-height: 3rem; margin: .35rem 0 0; }
 .program-switch-actions button { width: auto; min-height: 2.8rem; margin: 0; padding-inline: 1rem; }
-.program-carousel { display: flex; width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.active-plan-message { color: var(--muted); font-size: .78rem; font-weight: 750; }
+.program-carousel { display: flex; gap: .75rem; width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; background: var(--background); -webkit-overflow-scrolling: touch; }
 .program-carousel::-webkit-scrollbar { display: none; }
 .program-carousel-card { flex: 0 0 100%; width: 100%; min-width: 100%; margin: 0; scroll-snap-align: start; scroll-snap-stop: always; }
 .program-carousel-dots { display: flex; justify-content: center; gap: .45rem; padding: .8rem 0 .2rem; }
@@ -2014,6 +2015,7 @@ h2 {
 .program-action-confirm > div { display: flex; gap: .55rem; }
 .program-action-confirm > div button { flex: 1; min-height: 2.8rem; }
 .program-browser-loading { color: var(--muted); }
+.program-page-header + .program-import-panel { margin-bottom: 1rem; }
 .add-rest-day-button { min-height: 2.5rem; padding: 0 .7rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--background); color: var(--accent-strong); font-size: .7rem; font-weight: 800; }
 .upcoming-workout-queue .queue-rest-day { grid-template-columns: 2.5rem minmax(0, 1fr) 2.4rem; color: var(--muted); }
 .queue-rest-day > span { display: grid; place-items: center; font-size: 1rem; }
