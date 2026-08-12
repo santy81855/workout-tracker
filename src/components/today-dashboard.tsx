@@ -61,7 +61,8 @@ export function TodayDashboard() {
           programWeek: Math.ceil(sequenceInCycle / program.workoutsPerWeek) as ProgramWeek,
           templateSequence: ((sequenceInCycle - 1) % program.workoutTemplates.length) + 1,
         };
-        const queue = queueResult.error ? [] : ((queueResult.data as QueuedWorkout[] | null) ?? []).map((item) => ({ ...item, restDays: item.restDays ?? [] }));
+        const queue = (queueResult.error ? [] : ((queueResult.data as QueuedWorkout[] | null) ?? []).map((item) => ({ ...item, restDays: item.restDays ?? [] })))
+          .filter((item) => !resolvedSequences.has(item.sequenceInCycle));
         setUpcomingQueue(queue);
         setNextWorkout(queue[0] ?? fallbackNext);
       })
