@@ -31,6 +31,11 @@ function comparableSession(session: ActiveWorkoutSession) {
 
 let activeFlush: Promise<number> | null = null;
 
+export function canSafelyRebaseWorkout(local: ActiveWorkoutSession, remote: ActiveWorkoutSession) {
+  return local.updatedAt > remote.updatedAt
+    || (remote.status === "active" && (local.status === "completed" || local.status === "partial"));
+}
+
 function conflictRevision(message: string): number | null {
   const match = message.match(/SYNC_CONFLICT: server revision (\d+)/);
   return match ? Number(match[1]) : null;
@@ -78,7 +83,7 @@ async function runWorkoutOutboxFlush(): Promise<number> {
         if (remote && JSON.stringify(comparableSession(remote)) === JSON.stringify(comparableSession(operation.payload))) {
           await workoutRepository.markSessionSynced({ ...operation.payload, serverRevision: remote.serverRevision, syncStatus: "synced" });
           syncedCount += 1;
-        } else if (remote && operation.payload.updatedAt > remote.updatedAt) {
+        } else if (remote && canSafelyRebaseWorkout(operation.payload, remote)) {
           const rebased = { ...operation.payload, serverRevision: remote.serverRevision };
           try {
             const result = await syncWorkoutSession(rebased);
