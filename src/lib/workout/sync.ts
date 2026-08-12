@@ -1,6 +1,7 @@
 import { getActiveProgramRecord } from "@/lib/program/active-program";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { workoutRepository } from "./indexeddb-repository";
+import { getRemoteSession } from "./history";
 import type { ActiveWorkoutSession } from "./types";
 
 interface SyncResult {
@@ -16,6 +17,19 @@ export class WorkoutSyncConflictError extends Error {
     this.name = "WorkoutSyncConflictError";
   }
 }
+
+function comparableSession(session: ActiveWorkoutSession) {
+  const content = structuredClone(session) as Partial<ActiveWorkoutSession>;
+  delete content.serverRevision;
+  delete content.syncStatus;
+  delete content.updatedAt;
+  delete content.activeExerciseIndex;
+  delete content.restEndsAt;
+  delete content.templateColor;
+  return content;
+}
+
+let activeFlush: Promise<number> | null = null;
 
 function conflictRevision(message: string): number | null {
   const match = message.match(/SYNC_CONFLICT: server revision (\d+)/);
@@ -45,7 +59,7 @@ export async function syncWorkoutSession(session: ActiveWorkoutSession): Promise
   return data as unknown as SyncResult;
 }
 
-export async function flushWorkoutOutbox(): Promise<number> {
+async function runWorkoutOutboxFlush(): Promise<number> {
   const operations = await workoutRepository.listOutbox();
   let syncedCount = 0;
 
@@ -60,11 +74,20 @@ export async function flushWorkoutOutbox(): Promise<number> {
       syncedCount += 1;
     } catch (error) {
       if (error instanceof WorkoutSyncConflictError) {
-        await workoutRepository.markSessionConflict(operation.sessionId, operation.payload.updatedAt);
+        const remote = await getRemoteSession(operation.sessionId).catch(() => null);
+        if (remote && JSON.stringify(comparableSession(remote)) === JSON.stringify(comparableSession(operation.payload))) {
+          await workoutRepository.markSessionSynced({ ...operation.payload, serverRevision: remote.serverRevision, syncStatus: "synced" });
+          syncedCount += 1;
+        } else await workoutRepository.markSessionConflict(operation.sessionId, operation.payload.updatedAt);
       }
       // The durable operation remains queued for the next foreground attempt.
     }
   }
 
   return syncedCount;
+}
+
+export function flushWorkoutOutbox(): Promise<number> {
+  activeFlush ??= runWorkoutOutboxFlush().finally(() => { activeFlush = null; });
+  return activeFlush;
 }

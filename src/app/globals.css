@@ -1984,8 +1984,9 @@ h2 {
 .upcoming-workout-queue .drag-handle { width: 2.4rem; height: 2.4rem; padding: 0; border: 1px solid var(--border); border-radius: .7rem; background: var(--background); color: var(--accent-strong); font-size: 1.1rem; font-weight: 900; }
 .upcoming-workout-queue button:disabled { color: var(--muted); opacity: .35; }
 .add-rest-day-button { min-height: 2.5rem; padding: 0 .7rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--background); color: var(--accent-strong); font-size: .7rem; font-weight: 800; }
-.upcoming-workout-queue .queue-rest-day { grid-template-columns: 2.5rem minmax(0, 1fr); color: var(--muted); }
+.upcoming-workout-queue .queue-rest-day { grid-template-columns: 2.5rem minmax(0, 1fr) 2.4rem; color: var(--muted); }
 .queue-rest-day > span { display: grid; place-items: center; font-size: 1rem; }
+.upcoming-workout-queue .delete-rest-day { width: 2.4rem; height: 2.4rem; border: 0; border-radius: .7rem; background: transparent; color: #d84b4b; font-size: 1.2rem; }
 .program-formal-name { margin-top: .3rem; color: var(--muted); font-size: .78rem; font-weight: 700; }
 .split-type-pill { display: inline-flex; width: fit-content; margin-top: .8rem; padding: .4rem .65rem; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, var(--background)); color: var(--accent-strong); font-size: .7rem; font-weight: 800; }
 

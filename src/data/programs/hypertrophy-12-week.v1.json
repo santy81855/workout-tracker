@@ -232,7 +232,7 @@
       "sequence": 1,
       "originalDayLabel": "Monday",
       "name": "Chest + Quads + Biceps",
-      "color": "#2563EB",
+      "color": "#00B8F0",
       "exercises": [
         { "exercise": "incline-dumbbell-press", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
         { "exercise": "seated-machine-chest-press", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
@@ -246,7 +246,7 @@
       "sequence": 2,
       "originalDayLabel": "Tuesday",
       "name": "Back + Hamstrings + Triceps",
-      "color": "#DC2626",
+      "color": "#FF9F0A",
       "exercises": [
         { "exercise": "weighted-pull-up", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
         { "exercise": "seated-row", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
@@ -259,7 +259,7 @@
       "sequence": 3,
       "originalDayLabel": "Wednesday",
       "name": "Squat + Shoulders + Biceps + Calves",
-      "color": "#16A34A",
+      "color": "#64D23D",
       "exercises": [
         { "exercise": "back-squat", "repMin": 8, "repMax": 12, "peakSets": 4, "guidance": [] },
         { "exercise": "seated-shoulder-press", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
@@ -272,7 +272,7 @@
       "sequence": 4,
       "originalDayLabel": "Thursday",
       "name": "Back + Quads + Triceps + Abs",
-      "color": "#9333EA",
+      "color": "#A855F7",
       "exercises": [
         { "exercise": "pull-up", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
         { "exercise": "seated-row", "repMin": 12, "repMax": 20, "peakSets": 4, "guidance": [] },
@@ -286,7 +286,7 @@
       "sequence": 5,
       "originalDayLabel": "Friday",
       "name": "Chest + Hamstrings + Biceps + Calves",
-      "color": "#EA580C",
+      "color": "#FF3B7D",
       "exercises": [
         { "exercise": "seated-machine-chest-press", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
         { "exercise": "incline-dumbbell-press", "repMin": 12, "repMax": 20, "peakSets": 3, "guidance": [] },
