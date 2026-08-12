@@ -348,6 +348,8 @@ export function ActiveWorkout() {
     const hasSkippedSets = session.exercises.some((item) => item.sets.some((set) => set.status === "skipped"));
     const completed = { ...session, status: hasSkippedSets ? "partial" as const : "completed" as const, restEndsAt: null, finishedAt: new Date().toISOString() };
     await commit(completed);
+    if (syncTimer.current !== null) { window.clearTimeout(syncTimer.current); syncTimer.current = null; }
+    if (navigator.onLine) await flushWorkoutOutbox();
     router.push(`/workout/summary?session=${completed.id}`);
   }
 

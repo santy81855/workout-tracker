@@ -78,6 +78,13 @@ async function runWorkoutOutboxFlush(): Promise<number> {
         if (remote && JSON.stringify(comparableSession(remote)) === JSON.stringify(comparableSession(operation.payload))) {
           await workoutRepository.markSessionSynced({ ...operation.payload, serverRevision: remote.serverRevision, syncStatus: "synced" });
           syncedCount += 1;
+        } else if (remote && operation.payload.updatedAt > remote.updatedAt) {
+          const rebased = { ...operation.payload, serverRevision: remote.serverRevision };
+          try {
+            const result = await syncWorkoutSession(rebased);
+            await workoutRepository.markSessionSynced({ ...rebased, serverRevision: result.serverRevision, syncStatus: "synced" });
+            syncedCount += 1;
+          } catch { await workoutRepository.markSessionConflict(operation.sessionId, operation.payload.updatedAt); }
         } else await workoutRepository.markSessionConflict(operation.sessionId, operation.payload.updatedAt);
       }
       // The durable operation remains queued for the next foreground attempt.
