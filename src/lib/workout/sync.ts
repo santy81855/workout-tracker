@@ -56,6 +56,13 @@ export async function syncWorkoutSession(session: ActiveWorkoutSession): Promise
 
   if (bootstrapError) throw new Error(bootstrapError.message);
 
+  const { error: alignmentError } = await supabase.rpc("align_scheduled_workout_slot", {
+    p_sequence_in_cycle: session.sequenceInCycle,
+    p_program_week: session.programWeek,
+    p_template_name: session.templateName,
+  });
+  if (alignmentError) throw new Error(alignmentError.message);
+
   const { data, error } = await supabase.rpc("sync_workout_session", {
     p_session: session,
   });
