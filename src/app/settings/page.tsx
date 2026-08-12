@@ -3,6 +3,7 @@ import { DataExportPanel } from "@/components/data-export-panel";
 import { ProgramImportPanel } from "@/components/program-import-panel";
 import { ActiveProgramSetting } from "@/components/active-program-setting";
 import { AppearancePreferences } from "@/components/appearance-preferences";
+import { ManualSyncPanel } from "@/components/manual-sync-panel";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
@@ -30,6 +31,7 @@ export default async function SettingsPage() {
         <ActiveProgramSetting />
       </section>
       <AppearancePreferences />
+      <ManualSyncPanel />
       <DataExportPanel />
       <ProgramImportPanel />
       <section className="settings-section signout-section">

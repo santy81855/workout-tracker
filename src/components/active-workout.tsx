@@ -68,8 +68,13 @@ export function ActiveWorkout() {
       })
       .catch(() => setError("The active workout could not be restored."));
     void listAvailableSessions().then(setHistory);
-    void createSupabaseBrowserClient().rpc("get_exercise_library").then(({ data }) => { if (data) setExerciseLibrary(data as LibraryExercise[]); });
-  }, []);
+    void createSupabaseBrowserClient().rpc("get_exercise_library").then(({ data }) => {
+      if (!data) return;
+      const completeLibrary = new Map<string, LibraryExercise>();
+      for (const candidate of [...program.exercises, ...(data as LibraryExercise[])]) completeLibrary.set(candidate.slug, candidate);
+      setExerciseLibrary([...completeLibrary.values()].sort((left, right) => left.name.localeCompare(right.name)));
+    });
+  }, [program.exercises]);
 
   useEffect(() => {
     async function flushAndRefresh() {
@@ -499,8 +504,7 @@ export function ActiveWorkout() {
           </div>
         ) : null}
 
-        <div className="set-progress-heading"><span>Set</span></div>
-        <div className="set-progress" aria-label="Set progress">
+        <div className="set-progress-row"><span>Set</span><div className="set-progress" aria-label="Set progress">
           {exercise.sets.map((set, index) => (
             <button
               className={set.status === "completed" ? "set-dot set-dot-complete" : index === activeSetIndex ? "set-dot set-dot-active" : "set-dot"}
@@ -513,7 +517,7 @@ export function ActiveWorkout() {
               <span className="sr-only">{set.status === "completed" ? `Undo set ${set.setNumber}` : `Set ${set.setNumber}`}</span>
             </button>
           ))}
-        </div>
+        </div></div>
 
         {previous ? (
           <div className="previous-performance">
@@ -665,7 +669,7 @@ export function ActiveWorkout() {
           })}
         </ol>
         {isLastExercise ? <p className="muted-copy">This is your final exercise.</p> : null}
-        {!showAddExercise ? <button className="add-session-exercise-trigger" onClick={() => setShowAddExercise(true)} type="button">+ Add Exercise</button> : <div className="add-session-exercise-panel"><div><strong>Add to this workout</strong><button aria-label="Close add exercise panel" onClick={() => { setShowAddExercise(false); setAddedExerciseSlug(""); setShowCustomExercise(false); }} type="button">×</button></div><label>Exercise<select onChange={(event) => setAddedExerciseSlug(event.target.value)} value={addedExerciseSlug}><option value="">Choose an exercise</option>{exerciseLibrary.filter((candidate) => !session.exercises.some((item) => item.performedExerciseSlug === candidate.slug)).map((candidate) => <option key={candidate.slug} value={candidate.slug}>{candidate.name}{candidate.isCustom ? " · Custom" : ""}</option>)}</select></label><button className="custom-exercise-toggle" onClick={() => setShowCustomExercise((shown) => !shown)} type="button">{showCustomExercise ? "Cancel custom exercise" : "+ Create custom exercise"}</button>{showCustomExercise ? <div className="custom-exercise-fields"><label>Name<input maxLength={120} onChange={(event) => setCustomExercise({ ...customExercise, name: event.target.value })} value={customExercise.name} /></label><label>Equipment<input maxLength={80} onChange={(event) => setCustomExercise({ ...customExercise, equipment: event.target.value })} placeholder="Cable, machine, dumbbell…" value={customExercise.equipment} /></label><label>Load entry<select onChange={(event) => setCustomExercise({ ...customExercise, loadBasis: event.target.value })} value={customExercise.loadBasis}><option value="external_total">Total weight</option><option value="per_dumbbell">Per dumbbell</option><option value="added_bodyweight">Added bodyweight</option><option value="bodyweight_only">Bodyweight only</option><option value="repetition_only">Reps only</option></select></label><label>Primary muscle<select onChange={(event) => setCustomExercise({ ...customExercise, primaryMuscle: event.target.value })} value={customExercise.primaryMuscle}>{program.muscleGroups.map((muscle) => <option key={muscle} value={muscle}>{muscleLabel(muscle)}</option>)}</select></label><label>Increment (lb)<input inputMode="decimal" min="0.1" onChange={(event) => setCustomExercise({ ...customExercise, incrementLb: event.target.value })} type="number" value={customExercise.incrementLb} /></label><label>Rest (seconds)<input inputMode="numeric" max="600" min="30" onChange={(event) => setCustomExercise({ ...customExercise, restSeconds: event.target.value })} type="number" value={customExercise.restSeconds} /></label><button className="secondary-button" disabled={creatingExercise || !customExercise.name.trim() || !customExercise.equipment.trim()} onClick={() => void createCustomExercise()} type="button">{creatingExercise ? "Creating…" : "Save Custom Exercise"}</button></div> : null}<label>Working sets<select onChange={(event) => setAddedExerciseSets(Number(event.target.value))} value={addedExerciseSets}>{[1,2,3,4].map((count) => <option key={count} value={count}>{count}</option>)}</select></label><button className="primary-button" disabled={!addedExerciseSlug} onClick={addExerciseToSession} type="button">Add to Itinerary</button><p>This changes today’s workout only.</p></div>}
+        {!showAddExercise ? <button className="add-session-exercise-trigger" onClick={() => setShowAddExercise(true)} type="button">+ Add Exercise</button> : <div className="add-session-exercise-panel"><div><strong>Add to this workout</strong><button aria-label="Close add exercise panel" onClick={() => { setShowAddExercise(false); setAddedExerciseSlug(""); setShowCustomExercise(false); }} type="button">×</button></div><label>Exercise<select onChange={(event) => setAddedExerciseSlug(event.target.value)} value={addedExerciseSlug}><option value="">Choose from your exercise library</option>{exerciseLibrary.filter((candidate) => !session.exercises.some((item) => item.performedExerciseSlug === candidate.slug)).map((candidate) => <option key={candidate.slug} value={candidate.slug}>{candidate.name}</option>)}</select></label><button className="custom-exercise-toggle" onClick={() => setShowCustomExercise((shown) => !shown)} type="button">{showCustomExercise ? "Cancel custom exercise" : "+ Create custom exercise"}</button>{showCustomExercise ? <div className="custom-exercise-fields"><label>Name<input maxLength={120} onChange={(event) => setCustomExercise({ ...customExercise, name: event.target.value })} value={customExercise.name} /></label><label>Equipment<input maxLength={80} onChange={(event) => setCustomExercise({ ...customExercise, equipment: event.target.value })} placeholder="Cable, machine, dumbbell…" value={customExercise.equipment} /></label><label>Load entry<select onChange={(event) => setCustomExercise({ ...customExercise, loadBasis: event.target.value })} value={customExercise.loadBasis}><option value="external_total">Total weight</option><option value="per_dumbbell">Per dumbbell</option><option value="added_bodyweight">Added bodyweight</option><option value="bodyweight_only">Bodyweight only</option><option value="repetition_only">Reps only</option></select></label><label>Primary muscle<select onChange={(event) => setCustomExercise({ ...customExercise, primaryMuscle: event.target.value })} value={customExercise.primaryMuscle}>{program.muscleGroups.map((muscle) => <option key={muscle} value={muscle}>{muscleLabel(muscle)}</option>)}</select></label><label>Increment (lb)<input inputMode="decimal" min="0.1" onChange={(event) => setCustomExercise({ ...customExercise, incrementLb: event.target.value })} type="number" value={customExercise.incrementLb} /></label><label>Rest (seconds)<input inputMode="numeric" max="600" min="30" onChange={(event) => setCustomExercise({ ...customExercise, restSeconds: event.target.value })} type="number" value={customExercise.restSeconds} /></label><button className="secondary-button" disabled={creatingExercise || !customExercise.name.trim() || !customExercise.equipment.trim()} onClick={() => void createCustomExercise()} type="button">{creatingExercise ? "Creating…" : "Save Custom Exercise"}</button></div> : null}<label>Working sets<select onChange={(event) => setAddedExerciseSets(Number(event.target.value))} value={addedExerciseSets}>{[1,2,3,4].map((count) => <option key={count} value={count}>{count}</option>)}</select></label><button className="primary-button" disabled={!addedExerciseSlug} onClick={addExerciseToSession} type="button">Add to Itinerary</button><p>This changes today’s workout only.</p></div>}
       </section>
     </main>
   );

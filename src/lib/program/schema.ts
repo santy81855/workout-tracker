@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const slugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+const templateColors = ["#2563EB", "#DC2626", "#16A34A", "#9333EA", "#EA580C", "#0891B2", "#CA8A04"] as const;
 
 export const loadBasisSchema = z.enum([
   "external_total",
@@ -82,6 +83,7 @@ export const workoutTemplateSchema = z.object({
   sequence: z.number().int().min(1).max(7),
   originalDayLabel: z.string().trim().min(1).max(20),
   name: z.string().trim().min(1).max(120),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a six-digit hex color such as #2563EB").optional(),
   exercises: z.array(workoutTemplateExerciseSchema).min(1).max(20),
 });
 
@@ -187,7 +189,11 @@ export const programDocumentSchema = z
         return [key, usedPeakSets.has(peak) ? rule : { required: Math.min(rule.required, peak), optional: Math.min(rule.optional, Math.max(0, peak - Math.min(rule.required, peak))) }];
       })) as typeof weekRule.setRules,
     }));
-    return { ...program, weekRules, workoutsPerWeek: program.trainingDaysPerWeek ?? program.workoutsPerWeek };
+    const workoutTemplates = program.workoutTemplates.map((template, index) => ({
+      ...template,
+      color: template.color ?? templateColors[index % templateColors.length],
+    }));
+    return { ...program, weekRules, workoutTemplates, workoutsPerWeek: program.trainingDaysPerWeek ?? program.workoutsPerWeek };
   });
 
 export type ProgramDocument = z.infer<typeof programDocumentSchema>;

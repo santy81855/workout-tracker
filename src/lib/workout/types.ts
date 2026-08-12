@@ -42,6 +42,7 @@ export interface ActiveWorkoutSession {
   templateSequence: number;
   phase: string;
   templateName: string;
+  templateColor: string;
   targetRirLabel: string;
   startedAt: string;
   finishedAt: string | null;
