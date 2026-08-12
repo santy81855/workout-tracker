@@ -39,6 +39,8 @@ export function ActiveWorkout() {
   const [showFinishPanel, setShowFinishPanel] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [confirmSkipExercise, setConfirmSkipExercise] = useState(false);
+  const [skipReason, setSkipReason] = useState("");
   const [history, setHistory] = useState<ActiveWorkoutSession[]>([]);
   const [recordCelebration, setRecordCelebration] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -221,6 +223,25 @@ export function ActiveWorkout() {
     void commit({ ...session, activeExerciseIndex: Math.min(session.exercises.length - 1, session.activeExerciseIndex + 1) });
   }
 
+  function skipExercise() {
+    if (!session || !exercise) return;
+    const exercises = [...session.exercises];
+    const sets = exercise.sets.map((set) => set.status === "completed" ? set : { ...set, status: "skipped" as const, rirOnTarget: null, actualRir: null, completedAt: null });
+    const reasonLabel = skipReason === "time" ? "short on time" : skipReason === "fatigue" ? "fatigue or recovery" : skipReason === "equipment" ? "equipment unavailable" : skipReason === "preference" ? "chose not to perform" : "";
+    const skipNote = reasonLabel ? `Skipped ${exercise.name}: ${reasonLabel}.` : "";
+    exercises[session.activeExerciseIndex] = { ...exercise, sets };
+    setConfirmSkipExercise(false);
+    setSkipReason("");
+    void commit({ ...session, exercises, restEndsAt: null, sessionNotes: skipNote ? [session.sessionNotes, skipNote].filter(Boolean).join("\n") : session.sessionNotes });
+  }
+
+  function undoExerciseSkip() {
+    if (!session || !exercise) return;
+    const exercises = [...session.exercises];
+    exercises[session.activeExerciseIndex] = { ...exercise, sets: exercise.sets.map((set) => set.status === "skipped" ? { ...set, status: "draft" as const } : set) };
+    void commit({ ...session, exercises });
+  }
+
   function replaceExercise(replacementSlug: string) {
     if (!session || !exercise) return;
     const replacement = program.exercises.find((candidate) => candidate.slug === replacementSlug);
@@ -258,7 +279,8 @@ export function ActiveWorkout() {
 
   async function finishWorkout() {
     if (!session) return;
-    const completed = { ...session, status: "completed" as const, restEndsAt: null, finishedAt: new Date().toISOString() };
+    const hasSkippedSets = session.exercises.some((item) => item.sets.some((set) => set.status === "skipped"));
+    const completed = { ...session, status: hasSkippedSets ? "partial" as const : "completed" as const, restEndsAt: null, finishedAt: new Date().toISOString() };
     await commit(completed);
     router.push(`/workout/summary?session=${completed.id}`);
   }
@@ -326,6 +348,8 @@ export function ActiveWorkout() {
 
   if (!exercise) return null;
   const exerciseComplete = exercise.sets.every((set) => set.status === "completed" || set.status === "skipped");
+  const exerciseWasSkipped = exercise.sets.some((set) => set.status === "skipped");
+  const completedSetCount = exercise.sets.filter((set) => set.status === "completed").length;
   const isLastExercise = session.activeExerciseIndex === session.exercises.length - 1;
   const performedDefinition = program.exercises.find((candidate) => candidate.slug === exercise.performedExerciseSlug);
   const editingNote = editingNoteId === exercise.id;
@@ -530,8 +554,9 @@ export function ActiveWorkout() {
 
         {exerciseComplete ? (
           <div className="exercise-complete">
-            <strong>{exercise.name} complete</strong>
-            <p>{exercise.sets.length} working {exercise.sets.length === 1 ? "set" : "sets"} saved.</p>
+            <strong>{exerciseWasSkipped ? `${exercise.name} skipped` : `${exercise.name} complete`}</strong>
+            <p>{exerciseWasSkipped ? `${completedSetCount} completed · ${exercise.sets.length - completedSetCount} skipped` : `${exercise.sets.length} working ${exercise.sets.length === 1 ? "set" : "sets"} saved.`}</p>
+            {exerciseWasSkipped ? <button className="undo-skip-button" onClick={undoExerciseSkip} type="button">Undo Skip</button> : null}
             {isLastExercise && showFinishPanel ? (
               <div className="finish-workout-panel">
                 <h2>Finish session</h2>
@@ -558,6 +583,9 @@ export function ActiveWorkout() {
           {exercise.notes && !editingNote ? <p className="exercise-note-display">{exercise.notes}</p> : null}
           {editingNote ? <div className="exercise-note-editor"><label><span className="sr-only">Note for {exercise.name}</span><textarea autoFocus onFocus={(event) => event.currentTarget.setSelectionRange(event.currentTarget.value.length, event.currentTarget.value.length)} onChange={(event) => setNoteDraft(event.target.value)} placeholder="Setup cue, seat position, technique reminder…" value={noteDraft} /></label><div className="exercise-note-actions"><button onClick={() => { setNoteDraft(exercise.notes); setEditingNoteId(null); }} type="button">Cancel</button><button className="primary-button" onClick={() => { const exercises = [...session.exercises]; exercises[session.activeExerciseIndex] = { ...exercise, notes: noteDraft.trim() }; void commit({ ...session, exercises }); setEditingNoteId(null); }} type="button">Save note</button></div></div> : null}
         </div>
+
+        {!exerciseComplete && !confirmSkipExercise ? <button className="skip-exercise-trigger" onClick={() => setConfirmSkipExercise(true)} type="button">Skip This Exercise</button> : null}
+        {confirmSkipExercise ? <div className="skip-exercise-panel" role="alertdialog" aria-label={`Skip ${exercise.name}?`}><strong>Skip the remaining sets?</strong><p>Completed sets will stay saved. Skipped sets won’t count toward volume or progression.</p><label>Reason <span>Optional</span><select onChange={(event) => setSkipReason(event.target.value)} value={skipReason}><option value="">No reason</option><option value="time">Short on time</option><option value="fatigue">Fatigue or recovery</option><option value="equipment">Equipment unavailable</option><option value="preference">Don’t want to do it today</option></select></label><div><button onClick={() => { setConfirmSkipExercise(false); setSkipReason(""); }} type="button">Keep Exercise</button><button className="danger-button" onClick={skipExercise} type="button">Skip Exercise</button></div></div> : null}
 
         {error ? <p className="form-message action-error" role="alert">{error}</p> : null}
         {!confirmCancel ? <button className="cancel-workout-trigger" onClick={() => { setConfirmCancel(true); window.requestAnimationFrame(() => { window.scrollTo({ top: 0, behavior: "smooth" }); cancelPanel.current?.focus(); }); }} type="button">Cancel Workout</button> : null}
