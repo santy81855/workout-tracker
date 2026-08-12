@@ -41,8 +41,7 @@ export function TodayDashboard() {
   const draggingRestDay = useRef<string | null>(null);
 
   useEffect(() => {
-    void flushWorkoutOutbox();
-    Promise.all([workoutRepository.getActiveSession(), listAvailableSessions(), createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: 5 })])
+    void flushWorkoutOutbox().then(() => Promise.all([workoutRepository.getActiveSession(), listAvailableSessions(), createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: 5 })]))
       .then(([active, sessions, queueResult]) => {
         const cycleSessions = sessions.filter((session) => session.programSlug === program.slug && session.cycleStartsOn === cycleStartsOn);
         const cycleActive = active?.programSlug === program.slug && active.cycleStartsOn === cycleStartsOn ? active : null;
