@@ -1,7 +1,7 @@
 "use client";
 
 import { workoutRepository } from "@/lib/workout/indexeddb-repository";
-import { flushWorkoutOutbox } from "@/lib/workout/sync";
+import { flushWorkoutOutbox, getLastWorkoutSyncErrors } from "@/lib/workout/sync";
 import { useState } from "react";
 
 export function ManualSyncPanel() {
@@ -17,7 +17,11 @@ export function ManualSyncPanel() {
       const before = await workoutRepository.listOutbox();
       await flushWorkoutOutbox();
       const remaining = await workoutRepository.listOutbox();
-      if (remaining.length > 0) { setMessageKind("error"); setMessage(`${remaining.length} workout change${remaining.length === 1 ? " is" : "s are"} still waiting. Open the affected workout if it has a conflict.`); }
+      if (remaining.length > 0) {
+        const details = getLastWorkoutSyncErrors();
+        setMessageKind("error");
+        setMessage(details.length > 0 ? details.map((item) => `${item.workout}: ${item.message}`).join(" ") : `${remaining.length} workout change${remaining.length === 1 ? " is" : "s are"} still waiting.`);
+      }
       else { setMessageKind("success"); setMessage(before.length > 0 ? `Synced ${before.length} workout change${before.length === 1 ? "" : "s"} to your account.` : "Everything stored on this device is already synced."); }
     } catch {
       setMessageKind("error");

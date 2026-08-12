@@ -131,17 +131,10 @@ export function ActiveWorkout() {
       setError(null);
       if (syncTimer.current !== null) window.clearTimeout(syncTimer.current);
       syncTimer.current = window.setTimeout(() => {
-        void syncWorkoutSession(updated)
-          .then(async (result) => {
-            const synced = { ...updated, serverRevision: result.serverRevision, syncStatus: "synced" as const };
-            setSession((current) => current?.updatedAt === updated.updatedAt ? synced : current);
-            await workoutRepository.markSessionSynced(synced);
-          })
-          .catch(async (syncError) => {
-            const syncStatus = syncError instanceof WorkoutSyncConflictError ? "conflict" as const : "pending" as const;
-            setSession((current) => current?.updatedAt === updated.updatedAt ? { ...current, syncStatus } : current);
-            if (syncStatus === "conflict") await workoutRepository.markSessionConflict(updated.id, updated.updatedAt);
-          });
+        void flushWorkoutOutbox().then(async () => {
+          const stored = await workoutRepository.getSession(updated.id);
+          if (stored) setSession((current) => current?.updatedAt === updated.updatedAt ? stored : current);
+        });
       }, 800);
     } catch {
       setError("This change could not be saved locally. Keep this screen open and try again.");

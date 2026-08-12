@@ -30,6 +30,9 @@ function comparableSession(session: ActiveWorkoutSession) {
 }
 
 let activeFlush: Promise<number> | null = null;
+let lastSyncErrors: Array<{ sessionId: string; workout: string; message: string }> = [];
+
+export function getLastWorkoutSyncErrors() { return [...lastSyncErrors]; }
 
 export function canSafelyRebaseWorkout(local: ActiveWorkoutSession, remote: ActiveWorkoutSession) {
   return local.updatedAt > remote.updatedAt
@@ -67,6 +70,7 @@ export async function syncWorkoutSession(session: ActiveWorkoutSession): Promise
 async function runWorkoutOutboxFlush(): Promise<number> {
   const operations = await workoutRepository.listOutbox();
   let syncedCount = 0;
+  const errors: typeof lastSyncErrors = [];
 
   for (const operation of operations) {
     try {
@@ -89,13 +93,19 @@ async function runWorkoutOutboxFlush(): Promise<number> {
             const result = await syncWorkoutSession(rebased);
             await workoutRepository.markSessionSynced({ ...rebased, serverRevision: result.serverRevision, syncStatus: "synced" });
             syncedCount += 1;
-          } catch { await workoutRepository.markSessionConflict(operation.sessionId, operation.payload.updatedAt); }
+          } catch (retryError) {
+            errors.push({ sessionId: operation.sessionId, workout: operation.payload.templateName, message: retryError instanceof Error ? retryError.message : "Unknown synchronization error" });
+            await workoutRepository.markSessionConflict(operation.sessionId, operation.payload.updatedAt);
+          }
         } else await workoutRepository.markSessionConflict(operation.sessionId, operation.payload.updatedAt);
-      }
+        if (!remote) errors.push({ sessionId: operation.sessionId, workout: operation.payload.templateName, message: "The server workout could not be loaded to resolve its revision conflict." });
+        else if (!canSafelyRebaseWorkout(operation.payload, remote) && JSON.stringify(comparableSession(remote)) !== JSON.stringify(comparableSession(operation.payload))) errors.push({ sessionId: operation.sessionId, workout: operation.payload.templateName, message: "This workout differs from a newer server version." });
+      } else errors.push({ sessionId: operation.sessionId, workout: operation.payload.templateName, message: error instanceof Error ? error.message : "Unknown synchronization error" });
       // The durable operation remains queued for the next foreground attempt.
     }
   }
 
+  lastSyncErrors = errors;
   return syncedCount;
 }
 
