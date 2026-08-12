@@ -811,6 +811,17 @@ h2 {
   text-decoration: underline;
 }
 
+.skip-exercise-trigger { width: 100%; min-height: 2.75rem; margin-top: .85rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--background); color: var(--muted); font-size: .75rem; font-weight: 800; }
+.skip-exercise-panel { display: grid; gap: .65rem; margin-top: .85rem; padding: .9rem; border: 1px solid color-mix(in srgb, #d9822b 55%, var(--border)); border-radius: .9rem; background: color-mix(in srgb, #d9822b 7%, var(--background)); }
+.skip-exercise-panel p { color: var(--muted); font-size: .75rem; line-height: 1.45; }
+.skip-exercise-panel label { display: grid; grid-template-columns: 1fr auto; gap: .35rem; color: var(--text); font-size: .72rem; font-weight: 800; }
+.skip-exercise-panel label span { color: var(--muted); font-weight: 600; }
+.skip-exercise-panel select { grid-column: 1 / -1; min-height: 2.75rem; padding: 0 .7rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); color: var(--text); }
+.skip-exercise-panel > div { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.skip-exercise-panel button, .undo-skip-button { min-height: 2.75rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); color: var(--text); font-weight: 800; }
+.skip-exercise-panel .danger-button { color: #d0602b; }
+.undo-skip-button { width: 100%; color: var(--accent-strong); }
+
 .timer-bar {
   display: flex;
   align-items: center;
