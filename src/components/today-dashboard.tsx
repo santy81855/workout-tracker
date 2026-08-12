@@ -49,18 +49,18 @@ export function TodayDashboard() {
         setNextWorkout({
           sequenceInCycle,
           programWeek: Math.ceil(sequenceInCycle / program.workoutsPerWeek) as ProgramWeek,
-          templateSequence: ((sequenceInCycle - 1) % program.workoutsPerWeek) + 1,
+          templateSequence: ((sequenceInCycle - 1) % program.workoutTemplates.length) + 1,
         });
       })
       .catch(() => setError("The locally saved workout could not be loaded."))
       .finally(() => setLoading(false));
-  }, [program.slug, program.weekCount, program.workoutsPerWeek, cycleStartsOn]);
+  }, [program.slug, program.weekCount, program.workoutsPerWeek, program.workoutTemplates.length, cycleStartsOn]);
 
   async function startWorkout() {
     setError(null);
     try {
       const session = activeSession ?? applyPreviousLoads(
-        createInitialSession(nextWorkout.programWeek, nextWorkout.templateSequence, new Date(), program, cycleStartsOn),
+        createInitialSession(nextWorkout.programWeek, nextWorkout.templateSequence, new Date(), program, cycleStartsOn, nextWorkout.sequenceInCycle),
         availableSessions,
       );
       await workoutRepository.saveActiveSession(session);

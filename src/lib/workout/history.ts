@@ -8,11 +8,11 @@ export async function listRemoteSessions(): Promise<ActiveWorkoutSession[]> {
   const [{ data, error }, { data: library }] = await Promise.all([supabase.rpc("get_workout_history"), supabase.rpc("get_program_library")]);
   if (error) throw new Error(error.message);
   const sessions = activeWorkoutSessionSchema.array().parse(data);
-  const cycles = (library as Array<{ startsOn: string; document: { slug: string; workoutsPerWeek: number } }> | null) ?? [];
+  const cycles = (library as Array<{ startsOn: string; document: { slug: string; workoutTemplates: unknown[] } }> | null) ?? [];
   return sessions.map((session) => {
     const cycle = cycles.find((candidate) => candidate.startsOn === session.cycleStartsOn && candidate.document.slug === session.programSlug);
-    const workoutsPerWeek = cycle?.document.workoutsPerWeek ?? 5;
-    return { ...session, templateSequence: ((session.sequenceInCycle - 1) % workoutsPerWeek) + 1 };
+    const templateCount = cycle?.document.workoutTemplates.length ?? 5;
+    return { ...session, templateSequence: ((session.sequenceInCycle - 1) % templateCount) + 1 };
   });
 }
 
