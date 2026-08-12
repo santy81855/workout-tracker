@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const slugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-const templateColors = ["#2563EB", "#DC2626", "#16A34A", "#9333EA", "#EA580C", "#0891B2", "#CA8A04"] as const;
+const templateColors = ["#00B8F0", "#FF9F0A", "#64D23D", "#A855F7", "#FF3B7D", "#FFD60A", "#5E5CE6"] as const;
 
 export const loadBasisSchema = z.enum([
   "external_total",

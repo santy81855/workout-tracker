@@ -17,7 +17,7 @@ describe("program document", () => {
     const templates = legacy.workoutTemplates as Array<Record<string, unknown>>;
     for (const template of templates) delete template.color;
     expect(programDocumentSchema.parse(legacy).workoutTemplates.map((template) => template.color)).toEqual([
-      "#2563EB", "#DC2626", "#16A34A", "#9333EA", "#EA580C",
+      "#00B8F0", "#FF9F0A", "#64D23D", "#A855F7", "#FF3B7D",
     ]);
   });
 

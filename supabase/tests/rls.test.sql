@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(53);
+select plan(55);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -257,6 +257,8 @@ select lives_ok(
   'owner can add a rest day before the next workout'
 );
 select is(jsonb_array_length(public.get_upcoming_workout_queue(5)->0->'restDays'), 1, 'the upcoming queue exposes the inserted rest day');
+select lives_ok($$select public.remove_scheduled_rest_day((public.get_upcoming_workout_queue(5)->0->'restDays'->0->>'id')::uuid)$$, 'owner can delete a queued rest day');
+select is(jsonb_array_length(public.get_upcoming_workout_queue(5)->0->'restDays'), 0, 'deleted rest day disappears from the queue');
 
 create temporary table deletion_target as select scheduled_workout_id from public.workout_sessions where id = '50000000-0000-4000-8000-000000000001';
 update public.workout_sessions set status = 'completed', finished_at = coalesce(finished_at, now())

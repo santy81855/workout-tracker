@@ -36,6 +36,7 @@ export function TodayDashboard() {
   const [draggingQueueIndex, setDraggingQueueIndex] = useState<number | null>(null);
   const [queueDropIndex, setQueueDropIndex] = useState<number | null>(null);
   const [addingRest, setAddingRest] = useState(false);
+  const [deletingRest, setDeletingRest] = useState<string | null>(null);
   const dragStartIndex = useRef<number | null>(null);
   const draggingRestDay = useRef<string | null>(null);
 
@@ -135,6 +136,18 @@ export function TodayDashboard() {
     setReordering(false);
   }
 
+  async function deleteRestDay(restDayId: string) {
+    if (activeSession || deletingRest) return;
+    setDeletingRest(restDayId); setError(null);
+    const { error: deleteError } = await createSupabaseBrowserClient().rpc("remove_scheduled_rest_day", { p_rest_day_id: restDayId });
+    if (deleteError) setError("The rest day could not be deleted. Check your connection and try again.");
+    else {
+      const { data } = await createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: 5 });
+      setUpcomingQueue(((data as QueuedWorkout[] | null) ?? []).map((item) => ({ ...item, restDays: item.restDays ?? [] })));
+    }
+    setDeletingRest(null);
+  }
+
   const displayedSession = activeSession;
   const template = program.workoutTemplates.find((candidate) => candidate.sequence === nextWorkout.templateSequence)
     ?? program.workoutTemplates[0];
@@ -184,7 +197,7 @@ export function TodayDashboard() {
       <div className="section-heading"><div><p className="eyebrow">Flexible order</p><h2 id="upcoming-workouts-title">Upcoming workouts</h2></div><button className="add-rest-day-button" disabled={activeSession !== null || addingRest} onClick={() => void addRestDay()} type="button">{addingRest ? "Adding…" : "+ Rest day"}</button></div>
       <p className="muted-copy">Drag workouts into the order that fits your recovery. Adding a rest day moves the whole queue back one day.</p>
       <ol>{upcomingQueue.map((queued, index) => <Fragment key={queued.scheduledWorkoutId}>
-        {queued.restDays.map((restDay) => <li className="queue-rest-day" key={restDay.id}><button className="drag-handle" aria-label={`Drag rest day before ${queued.templateName}`} disabled={activeSession !== null || reordering} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); draggingRestDay.current = restDay.id; setQueueDropIndex(index); }} onPointerMove={(event) => { if (!draggingRestDay.current) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-queue-index]"); if (target) setQueueDropIndex(Number(target.dataset.queueIndex)); }} onPointerUp={() => void finishRestDayDrag()} onPointerCancel={() => void finishRestDayDrag()} type="button">⠿</button><div><strong>Rest day</strong><small>Recovery before {queued.templateName}</small></div></li>)}
+        {queued.restDays.map((restDay) => <li className="queue-rest-day" key={restDay.id}><button className="drag-handle" aria-label={`Drag rest day before ${queued.templateName}`} disabled={activeSession !== null || reordering} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); draggingRestDay.current = restDay.id; setQueueDropIndex(index); }} onPointerMove={(event) => { if (!draggingRestDay.current) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-queue-index]"); if (target) setQueueDropIndex(Number(target.dataset.queueIndex)); }} onPointerUp={() => void finishRestDayDrag()} onPointerCancel={() => void finishRestDayDrag()} type="button">⠿</button><div><strong>Rest day</strong><small>Recovery before {queued.templateName}</small></div><button className="delete-rest-day" aria-label={`Delete rest day before ${queued.templateName}`} disabled={deletingRest !== null} onClick={() => void deleteRestDay(restDay.id)} type="button">{deletingRest === restDay.id ? "…" : "×"}</button></li>)}
         <li className={draggingQueueIndex === index ? "dragging" : queueDropIndex === index ? "drag-target" : undefined} data-queue-index={index}><button className="drag-handle" aria-label={`Drag ${queued.templateName}`} disabled={activeSession !== null || reordering} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); dragStartIndex.current = index; setDraggingQueueIndex(index); setQueueDropIndex(index); }} onPointerMove={(event) => { if (dragStartIndex.current === null) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-queue-index]"); if (target) setQueueDropIndex(Number(target.dataset.queueIndex)); }} onPointerUp={finishQueueDrag} onPointerCancel={finishQueueDrag} type="button">⠿</button><div><strong>{queued.templateName}</strong><small>Week {queued.programWeek} · {new Date(`${queued.scheduledDate}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</small></div></li>
       </Fragment>)}</ol>
       {activeSession ? <p className="helper-text">Finish or cancel the active workout before changing the queue.</p> : null}
