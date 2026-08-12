@@ -2002,9 +2002,9 @@ h2 {
 .program-switch-actions { justify-content: flex-start; min-height: 3rem; margin: .35rem 0 0; }
 .program-switch-actions button { width: auto; min-height: 2.8rem; margin: 0; padding-inline: 1rem; }
 .active-plan-message { color: var(--muted); font-size: .78rem; font-weight: 750; }
-.program-carousel { display: flex; gap: .75rem; width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; background: var(--background); -webkit-overflow-scrolling: touch; }
+.program-carousel { display: flex; gap: .75rem; width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; background: transparent; -webkit-overflow-scrolling: touch; }
 .program-carousel::-webkit-scrollbar { display: none; }
-.program-carousel-card { flex: 0 0 100%; width: 100%; min-width: 100%; margin: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+.program-carousel-card { flex: 0 0 100%; width: 100%; min-width: 100%; margin: 0; overflow: hidden; box-shadow: none; scroll-snap-align: start; scroll-snap-stop: always; }
 .program-carousel-dots { display: flex; justify-content: center; gap: .45rem; padding: .8rem 0 .2rem; }
 .program-carousel-dots button { width: .5rem; height: .5rem; min-height: 0; padding: 0; border: 0; border-radius: 999px; background: var(--border); transition: width .18s ease, background .18s ease; }
 .program-carousel-dots button[aria-current="true"] { width: 1.35rem; background: var(--accent-strong); }
