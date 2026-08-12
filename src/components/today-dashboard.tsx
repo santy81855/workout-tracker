@@ -6,6 +6,7 @@ import { createInitialSession } from "@/lib/workout/create-session";
 import { listAvailableSessions } from "@/lib/workout/history";
 import { workoutRepository } from "@/lib/workout/indexeddb-repository";
 import { applyPreviousLoads } from "@/lib/workout/previous-performance";
+import { selectCycleActiveSession } from "@/lib/workout/active-session";
 import { flushWorkoutOutbox } from "@/lib/workout/sync";
 import type { ActiveWorkoutSession } from "@/lib/workout/types";
 import { useRouter } from "next/navigation";
@@ -20,6 +21,13 @@ interface NextWorkout {
 }
 interface QueueRestDay { id: string; restDate: string }
 interface QueuedWorkout extends NextWorkout { scheduledWorkoutId: string; templateName: string; scheduledDate: string; restDays: QueueRestDay[] }
+
+const UPCOMING_PREVIEW_COUNT = 5;
+const UPCOMING_FETCH_LIMIT = 10;
+
+function normalizeQueue(data: QueuedWorkout[] | null | undefined) {
+  return (data ?? []).map((item) => ({ ...item, restDays: item.restDays ?? [] }));
+}
 
 export function TodayDashboard() {
   const router = useRouter();
@@ -41,10 +49,13 @@ export function TodayDashboard() {
   const draggingRestDay = useRef<string | null>(null);
 
   useEffect(() => {
-    void flushWorkoutOutbox().then(() => Promise.all([workoutRepository.getActiveSession(), listAvailableSessions(), createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: 5 })]))
+    void flushWorkoutOutbox().then(() => Promise.all([workoutRepository.getActiveSession(), listAvailableSessions(), createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: UPCOMING_FETCH_LIMIT })]))
       .then(([active, sessions, queueResult]) => {
         const cycleSessions = sessions.filter((session) => session.programSlug === program.slug && session.cycleStartsOn === cycleStartsOn);
-        const cycleActive = active?.programSlug === program.slug && active.cycleStartsOn === cycleStartsOn ? active : null;
+        // An active workout may already have synced on another device (or have
+        // outlived this browser's IndexedDB). Treat the server copy as active so
+        // it cannot disappear from Today while its queue slot remains excluded.
+        const cycleActive = selectCycleActiveSession(active, cycleSessions, program.slug, cycleStartsOn);
         setActiveSession(cycleActive);
         // Queue progress is cycle-scoped, while compatible prior loads may come from an archived cycle.
         setAvailableSessions(sessions);
@@ -61,8 +72,9 @@ export function TodayDashboard() {
           programWeek: Math.ceil(sequenceInCycle / program.workoutsPerWeek) as ProgramWeek,
           templateSequence: ((sequenceInCycle - 1) % program.workoutTemplates.length) + 1,
         };
-        const queue = (queueResult.error ? [] : ((queueResult.data as QueuedWorkout[] | null) ?? []).map((item) => ({ ...item, restDays: item.restDays ?? [] })))
-          .filter((item) => !resolvedSequences.has(item.sequenceInCycle));
+        const queue = (queueResult.error ? [] : normalizeQueue(queueResult.data as QueuedWorkout[] | null))
+          .filter((item) => !resolvedSequences.has(item.sequenceInCycle))
+          .slice(0, UPCOMING_PREVIEW_COUNT);
         setUpcomingQueue(queue);
         setNextWorkout(queue[0] ?? fallbackNext);
       })
@@ -110,8 +122,8 @@ export function TodayDashboard() {
     const { error: restError } = await createSupabaseBrowserClient().rpc("insert_rest_day_before_workout", { p_scheduled_workout_id: upcomingQueue[0].scheduledWorkoutId });
     if (restError) setError("A rest day could not be added. Check your connection and try again.");
     else {
-      const { data } = await createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: 5 });
-      setUpcomingQueue(((data as QueuedWorkout[] | null) ?? []).map((item) => ({ ...item, restDays: item.restDays ?? [] })));
+      const { data } = await createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: UPCOMING_FETCH_LIMIT });
+      setUpcomingQueue(normalizeQueue(data as QueuedWorkout[] | null).slice(0, UPCOMING_PREVIEW_COUNT));
     }
     setAddingRest(false);
   }
@@ -130,8 +142,8 @@ export function TodayDashboard() {
     const { error: moveError } = await createSupabaseBrowserClient().rpc("move_scheduled_rest_day", { p_rest_day_id: restDayId, p_before_workout_id: upcomingQueue[target].scheduledWorkoutId });
     if (moveError) setError("The rest day could not be moved. Check your connection and try again.");
     else {
-      const { data } = await createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: 5 });
-      setUpcomingQueue(((data as QueuedWorkout[] | null) ?? []).map((item) => ({ ...item, restDays: item.restDays ?? [] })));
+      const { data } = await createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: UPCOMING_FETCH_LIMIT });
+      setUpcomingQueue(normalizeQueue(data as QueuedWorkout[] | null).slice(0, UPCOMING_PREVIEW_COUNT));
     }
     setReordering(false);
   }
@@ -142,8 +154,8 @@ export function TodayDashboard() {
     const { error: deleteError } = await createSupabaseBrowserClient().rpc("remove_scheduled_rest_day", { p_rest_day_id: restDayId });
     if (deleteError) setError("The rest day could not be deleted. Check your connection and try again.");
     else {
-      const { data } = await createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: 5 });
-      setUpcomingQueue(((data as QueuedWorkout[] | null) ?? []).map((item) => ({ ...item, restDays: item.restDays ?? [] })));
+      const { data } = await createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: UPCOMING_FETCH_LIMIT });
+      setUpcomingQueue(normalizeQueue(data as QueuedWorkout[] | null).slice(0, UPCOMING_PREVIEW_COUNT));
     }
     setDeletingRest(null);
   }
