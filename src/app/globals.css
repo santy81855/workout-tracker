@@ -1993,6 +1993,27 @@ h2 {
 .plan-library-import-button { min-height: 2.6rem; padding: 0 .9rem; border: 1px solid var(--accent); border-radius: .75rem; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent-strong); font-weight: 850; }
 .plan-library > .program-import-panel { margin: .8rem 0 1rem; }
 .skip-exercise-panel-inline { margin: .9rem 0 1rem; }
+.program-page-header { align-items: center; }
+.program-carousel-section { min-width: 0; margin-bottom: 1rem; }
+.program-carousel-actions, .program-switch-actions { display: flex; align-items: center; justify-content: space-between; gap: .65rem; margin-bottom: .7rem; }
+.program-carousel-actions > div, .program-switch-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.program-carousel-actions button { min-height: 2.5rem; padding: 0 .8rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); color: var(--foreground); font-weight: 800; }
+.program-carousel-actions .library-remove-button { color: #d84b4b; }
+.program-switch-actions { justify-content: flex-start; }
+.program-switch-actions button { width: auto; min-height: 2.8rem; margin: 0; padding-inline: 1rem; }
+.program-carousel { display: flex; width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.program-carousel::-webkit-scrollbar { display: none; }
+.program-carousel-card { flex: 0 0 100%; width: 100%; min-width: 100%; margin: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+.program-carousel-dots { display: flex; justify-content: center; gap: .45rem; padding: .8rem 0 .2rem; }
+.program-carousel-dots button { width: .5rem; height: .5rem; min-height: 0; padding: 0; border: 0; border-radius: 999px; background: var(--border); transition: width .18s ease, background .18s ease; }
+.program-carousel-dots button[aria-current="true"] { width: 1.35rem; background: var(--accent-strong); }
+.program-action-confirm { display: grid; gap: .75rem; margin-top: .8rem; padding: 1rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); }
+.program-action-confirm p { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+.program-action-confirm label { display: grid; gap: .35rem; color: var(--muted); font-size: .72rem; font-weight: 750; }
+.program-action-confirm input { min-height: 3rem; padding: .65rem .75rem; border: 1px solid var(--border); border-radius: .7rem; background: var(--background); color: var(--foreground); font: inherit; }
+.program-action-confirm > div { display: flex; gap: .55rem; }
+.program-action-confirm > div button { flex: 1; min-height: 2.8rem; }
+.program-browser-loading { color: var(--muted); }
 .add-rest-day-button { min-height: 2.5rem; padding: 0 .7rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--background); color: var(--accent-strong); font-size: .7rem; font-weight: 800; }
 .upcoming-workout-queue .queue-rest-day { grid-template-columns: 2.5rem minmax(0, 1fr) 2.4rem; color: var(--muted); }
 .queue-rest-day > span { display: grid; place-items: center; font-size: 1rem; }
