@@ -41,6 +41,7 @@ export function TodayDashboard() {
   const [availableSessions, setAvailableSessions] = useState<ActiveWorkoutSession[]>([]);
   const [nextWorkout, setNextWorkout] = useState<NextWorkout>({ sequenceInCycle: 1, programWeek: 1, templateSequence: 1 });
   const [upcomingQueue, setUpcomingQueue] = useState<QueuedWorkout[]>([]);
+  const [queueBoundary, setQueueBoundary] = useState<QueuedWorkout | null>(null);
   const [reordering, setReordering] = useState(false);
   const [draggingQueueIndex, setDraggingQueueIndex] = useState<number | null>(null);
   const [queueDropIndex, setQueueDropIndex] = useState<number | null>(null);
@@ -50,6 +51,11 @@ export function TodayDashboard() {
   const [changingSkip, setChangingSkip] = useState(false);
   const dragStartIndex = useRef<number | null>(null);
   const draggingRestDay = useRef<string | null>(null);
+
+  function setQueuePreview(queue: QueuedWorkout[]) {
+    setUpcomingQueue(queue.slice(0, UPCOMING_PREVIEW_COUNT));
+    setQueueBoundary(queue[UPCOMING_PREVIEW_COUNT] ?? null);
+  }
 
   useEffect(() => {
     void flushWorkoutOutbox().then(() => Promise.all([
@@ -81,9 +87,8 @@ export function TodayDashboard() {
           templateSequence: ((sequenceInCycle - 1) % program.workoutTemplates.length) + 1,
         };
         const queue = (queueResult.error ? [] : normalizeQueue(queueResult.data as QueuedWorkout[] | null))
-          .filter((item) => !resolvedSequences.has(item.sequenceInCycle))
-          .slice(0, UPCOMING_PREVIEW_COUNT);
-        setUpcomingQueue(queue);
+          .filter((item) => !resolvedSequences.has(item.sequenceInCycle));
+        setQueuePreview(queue);
         setNextWorkout(queue[0] ?? fallbackNext);
         setRecoverableSkip(skippedResult.error ? null : (skippedResult.data as RecoverableSkippedWorkout | null));
       })
@@ -132,7 +137,7 @@ export function TodayDashboard() {
     if (restError) setError("A rest day could not be added. Check your connection and try again.");
     else {
       const { data } = await createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: UPCOMING_FETCH_LIMIT });
-      setUpcomingQueue(normalizeQueue(data as QueuedWorkout[] | null).slice(0, UPCOMING_PREVIEW_COUNT));
+      setQueuePreview(normalizeQueue(data as QueuedWorkout[] | null));
     }
     setAddingRest(false);
   }
@@ -148,11 +153,13 @@ export function TodayDashboard() {
     draggingRestDay.current = null; setQueueDropIndex(null);
     if (!restDayId || target === null) return;
     setReordering(true); setError(null);
-    const { error: moveError } = await createSupabaseBrowserClient().rpc("move_scheduled_rest_day", { p_rest_day_id: restDayId, p_before_workout_id: upcomingQueue[target].scheduledWorkoutId });
+    const beforeWorkout = target === upcomingQueue.length ? queueBoundary : upcomingQueue[target];
+    if (!beforeWorkout) { setReordering(false); return; }
+    const { error: moveError } = await createSupabaseBrowserClient().rpc("move_scheduled_rest_day", { p_rest_day_id: restDayId, p_before_workout_id: beforeWorkout.scheduledWorkoutId });
     if (moveError) setError("The rest day could not be moved. Check your connection and try again.");
     else {
       const { data } = await createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: UPCOMING_FETCH_LIMIT });
-      setUpcomingQueue(normalizeQueue(data as QueuedWorkout[] | null).slice(0, UPCOMING_PREVIEW_COUNT));
+      setQueuePreview(normalizeQueue(data as QueuedWorkout[] | null));
     }
     setReordering(false);
   }
@@ -164,7 +171,7 @@ export function TodayDashboard() {
     if (deleteError) setError("The rest day could not be deleted. Check your connection and try again.");
     else {
       const { data } = await createSupabaseBrowserClient().rpc("get_upcoming_workout_queue", { p_limit: UPCOMING_FETCH_LIMIT });
-      setUpcomingQueue(normalizeQueue(data as QueuedWorkout[] | null).slice(0, UPCOMING_PREVIEW_COUNT));
+      setQueuePreview(normalizeQueue(data as QueuedWorkout[] | null));
     }
     setDeletingRest(null);
   }
@@ -231,9 +238,11 @@ export function TodayDashboard() {
       <div className="section-heading"><div><p className="eyebrow">Flexible order</p><h2 id="upcoming-workouts-title">Upcoming workouts</h2></div><button className="add-rest-day-button" disabled={activeSession !== null || addingRest} onClick={() => void addRestDay()} type="button">{addingRest ? "Adding…" : "+ Rest day"}</button></div>
       <p className="muted-copy">Drag workouts into the order that fits your recovery. Adding a rest day moves the whole queue back one day.</p>
       <ol>{upcomingQueue.map((queued, index) => <Fragment key={queued.scheduledWorkoutId}>
-        {queued.restDays.map((restDay) => <li className="queue-rest-day" key={restDay.id}><button className="drag-handle" aria-label={`Drag rest day before ${queued.templateName}`} disabled={activeSession !== null || reordering} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); draggingRestDay.current = restDay.id; setQueueDropIndex(index); }} onPointerMove={(event) => { if (!draggingRestDay.current) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-queue-index]"); if (target) setQueueDropIndex(Number(target.dataset.queueIndex)); }} onPointerUp={() => void finishRestDayDrag()} onPointerCancel={() => void finishRestDayDrag()} type="button">⠿</button><div><strong>Rest day</strong><small>Recovery before {queued.templateName}</small></div><button className="delete-rest-day" aria-label={`Delete rest day before ${queued.templateName}`} disabled={deletingRest !== null} onClick={() => void deleteRestDay(restDay.id)} type="button">{deletingRest === restDay.id ? "…" : "×"}</button></li>)}
+        {queued.restDays.map((restDay) => <li className="queue-rest-day" key={restDay.id}><button className="drag-handle" aria-label={`Drag rest day scheduled ${restDay.restDate}`} disabled={activeSession !== null || reordering} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); draggingRestDay.current = restDay.id; setQueueDropIndex(index); }} onPointerMove={(event) => { if (!draggingRestDay.current) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-queue-index]"); if (target) setQueueDropIndex(Number(target.dataset.queueIndex)); }} onPointerUp={() => void finishRestDayDrag()} onPointerCancel={() => void finishRestDayDrag()} type="button">⠿</button><div><strong>Rest day</strong><small>{new Date(`${restDay.restDate}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</small></div><button className="delete-rest-day" aria-label={`Delete rest day scheduled ${restDay.restDate}`} disabled={deletingRest !== null} onClick={() => void deleteRestDay(restDay.id)} type="button">{deletingRest === restDay.id ? "…" : "×"}</button></li>)}
         <li className={draggingQueueIndex === index ? "dragging" : queueDropIndex === index ? "drag-target" : undefined} data-queue-index={index}><button className="drag-handle" aria-label={`Drag ${queued.templateName}`} disabled={activeSession !== null || reordering} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); dragStartIndex.current = index; setDraggingQueueIndex(index); setQueueDropIndex(index); }} onPointerMove={(event) => { if (dragStartIndex.current === null) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-queue-index]"); if (target) setQueueDropIndex(Number(target.dataset.queueIndex)); }} onPointerUp={finishQueueDrag} onPointerCancel={finishQueueDrag} type="button">⠿</button><div><strong>{queued.templateName}</strong><small>Week {queued.programWeek} · {new Date(`${queued.scheduledDate}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</small></div></li>
-      </Fragment>)}</ol>
+      </Fragment>)}
+      {queueBoundary?.restDays.map((restDay) => <li className="queue-rest-day queue-rest-day-at-end" key={restDay.id}><button className="drag-handle" aria-label={`Drag rest day scheduled ${restDay.restDate}`} disabled={activeSession !== null || reordering} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); draggingRestDay.current = restDay.id; setQueueDropIndex(upcomingQueue.length); }} onPointerMove={(event) => { if (!draggingRestDay.current) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-queue-index]"); if (target) setQueueDropIndex(Number(target.dataset.queueIndex)); }} onPointerUp={() => void finishRestDayDrag()} onPointerCancel={() => void finishRestDayDrag()} type="button">⠿</button><div><strong>Rest day</strong><small>{new Date(`${restDay.restDate}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</small></div><button className="delete-rest-day" aria-label={`Delete rest day scheduled ${restDay.restDate}`} disabled={deletingRest !== null} onClick={() => void deleteRestDay(restDay.id)} type="button">{deletingRest === restDay.id ? "…" : "×"}</button></li>)}
+      {queueBoundary ? <li className={`queue-end-drop-target${queueDropIndex === upcomingQueue.length ? " drag-target" : ""}`} data-queue-index={upcomingQueue.length}>Drop rest day at end</li> : null}</ol>
       {recoverableSkip ? <div className="recoverable-skipped-workout"><div><span>Skipped</span><strong>{recoverableSkip.templateName}</strong><small>Week {recoverableSkip.programWeek} · restore before completing the next workout</small></div><button disabled={changingSkip || activeSession !== null} onClick={() => void changeSkippedWorkout("unskip")} type="button">{changingSkip ? "Restoring…" : "Unskip"}</button></div> : null}
       {activeSession ? <p className="helper-text">Finish or cancel the active workout before changing the queue.</p> : null}
     </section> : null}
